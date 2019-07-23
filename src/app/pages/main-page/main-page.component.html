@@ -1,0 +1,55 @@
+<app-palette
+  [theme]="themes[currentTheme]"
+  [(active)]="isOpenPalette"
+  (changeColor)="onChangeColor($event)"
+  (apply)="createCustomTheme($event)"
+  (cancel)="onCancel()"
+  >
+</app-palette>
+
+<div class="controls">
+  <mat-form-field>
+    <mat-label>Strings</mat-label>
+    <mat-select [(ngModel)]="amountOfStrings" (selectionChange)="onChangeStrings($event.value)" name="strings">
+      <mat-option *ngFor="let string of stringOptions" [value]="string.value">
+        {{string.label}}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+
+  <div class="form-field">
+    <label class="field-label">Show base notes</label>
+    <mat-checkbox
+      [(ngModel)]="showBaseNotes"
+      (change)="onChangeShowNotes($event.checked, 'showBaseNotes')"
+    ></mat-checkbox>
+  </div>
+
+  <div class="form-field">
+    <label class="field-label">Show medium notes</label>
+    <mat-checkbox
+      [(ngModel)]="showMediumNotes"
+      (change)="onChangeShowNotes($event.checked, 'showMediumNotes')"
+    ></mat-checkbox>
+  </div>
+
+  <div class="form-field">
+    <mat-form-field>
+      <mat-label>Theme</mat-label>
+      <mat-select [(ngModel)]="currentTheme" (selectionChange)="onChangeTheme($event.value)" name="theme">
+        <mat-option *ngFor="let theme of themeOptions" [value]="theme.value">
+          {{theme.label}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+
+    <button (click)="openPalette()" style="margin-left: 15px;" mat-mini-fab isRoundButton="true">
+      <mat-icon>palette</mat-icon>
+    </button>
+  </div>
+</div>
+
+<div class="canvas-wrapper">
+  <canvas #canvas class="canvas" style="border:0px solid #000000;">
+  </canvas>
+</div>
