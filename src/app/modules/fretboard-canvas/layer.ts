@@ -37,7 +37,7 @@ export class CanvasLayer {
   }
 
   update() {
-    this.width = Number(getComputedStyle(this.canvas).getPropertyValue('width').slice(0, -2));
+    this.width = Number(getComputedStyle(this.canvas.parentElement).getPropertyValue('width').slice(0, -2));
     this.clear();
     this.fixDPI();
   }

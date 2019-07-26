@@ -61,7 +61,7 @@ export class Fret {
     this.context.fillStyle = this.theme.string;
 
     for (let string = 0; string < this.numberOfStrings; string++) {
-      this.context.fillRect(this.x, this.findY(string), this.width, 2);
+      this.context.fillRect(this.x - 1, this.findY(string), this.width + 1, 2);
     }
 
     this.context.fill();

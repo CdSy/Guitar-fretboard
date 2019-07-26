@@ -1,5 +1,7 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, fromEvent } from 'rxjs';
+import { filter, repeat, take, takeUntil, switchMap } from 'rxjs/operators';
+import { EventManager, SyntheticEvent } from './event-manager';
 import { Fret } from './fret';
 import { NoteElement } from './note';
 import { CanvasLayer } from './layer';
@@ -64,6 +66,10 @@ export class FretboardDrawerService {
   noteLayerCtx: CanvasRenderingContext2D;
 
   resize$ = fromEvent(window, 'resize');
+  pointerDown$: Observable<SyntheticEvent>;
+  pointerMove$: Observable<SyntheticEvent>;
+  pointerUp$: Observable<SyntheticEvent>;
+
 
   // State
   tuning$ = new BehaviorSubject<Array<number>>(DEFAULT_TUNING);
@@ -73,7 +79,7 @@ export class FretboardDrawerService {
   showFlatNotes: boolean;
   showSharpNotes: boolean;
 
-  constructor() {
+  constructor(private eventManager: EventManager) {
     // this is an approxumation of the tempered scale
     // geometric progression ratio 2^(1/12)
     this.ratio = 0.94;
@@ -109,11 +115,43 @@ export class FretboardDrawerService {
     this.noteLayer = new CanvasLayer({canvas: noteLayer, ...commonParams});
     this.theme = {...this.theme, ...theme};
 
+    this.pointerDown$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointerdown');
+    this.pointerMove$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointermove');
+    this.pointerUp$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointerup');
+
+    this.subscribeToEvents();
     this.drawFretboard();
     this.drawNotes();
   }
 
+  private subscribeToEvents() {
+    this.pointerDown$.pipe(
+      filter((event: SyntheticEvent) => event.target !== undefined)
+    ).subscribe((event: SyntheticEvent) => {
+      console.log(event, 'CLICK');
+    });
+
+    this.pointerDown$.pipe(
+      filter((event: SyntheticEvent) => event.target !== undefined),
+      switchMap(() => this.pointerMove$),
+      takeUntil(this.pointerUp$),
+      repeat()
+    ).subscribe((event: SyntheticEvent) => {
+      console.log(event, 'MOVE');
+    });
+
+    this.pointerDown$.pipe(
+      filter((event: SyntheticEvent) => event.target !== undefined),
+      switchMap(() => this.pointerUp$),
+      take(1),
+      repeat()
+    ).subscribe((event: SyntheticEvent) => {
+      console.log(event, 'UP');
+    });
+  }
+
   private redraw() {
+    this.eventManager.clearElements();
     this.fretLayer.update();
     this.noteLayer.update();
     this.drawFretboard();
@@ -160,6 +198,10 @@ export class FretboardDrawerService {
           bgColor,
           color,
         });
+
+        if (showNote) {
+          this.eventManager.registerElement(notes[fret]);
+        }
       }
 
       strings[string] = notes;
@@ -251,6 +293,7 @@ export class FretboardDrawerService {
     this[type] = value;
 
     this.noteLayer.clear();
+    this.eventManager.clearElements();
     this.drawNotes();
   }
 

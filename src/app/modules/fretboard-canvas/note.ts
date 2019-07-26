@@ -2,6 +2,7 @@ export interface INote {
   context: CanvasRenderingContext2D;
   x: number;
   y: number;
+  radius: number;
   fret: number;
   name: string;
   type: number;
