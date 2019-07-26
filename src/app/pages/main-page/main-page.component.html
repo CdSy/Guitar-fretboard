@@ -10,7 +10,7 @@
 <div class="controls">
   <mat-form-field>
     <mat-label>Strings</mat-label>
-    <mat-select [(ngModel)]="amountOfStrings" (selectionChange)="onChangeStrings($event.value)" name="strings">
+    <mat-select [(ngModel)]="numberOfStrings" (selectionChange)="onChangeStrings($event.value)" name="strings">
       <mat-option *ngFor="let string of stringOptions" [value]="string.value">
         {{string.label}}
       </mat-option>
@@ -18,18 +18,18 @@
   </mat-form-field>
 
   <div class="form-field">
-    <label class="field-label">Show base notes</label>
+    <label class="field-label">Show flat notes</label>
     <mat-checkbox
-      [(ngModel)]="showBaseNotes"
-      (change)="onChangeShowNotes($event.checked, 'showBaseNotes')"
+      [(ngModel)]="showFlatNotes"
+      (change)="onChangeShowNotes($event.checked, 'showFlatNotes')"
     ></mat-checkbox>
   </div>
 
   <div class="form-field">
-    <label class="field-label">Show medium notes</label>
+    <label class="field-label">Show sharp notes</label>
     <mat-checkbox
-      [(ngModel)]="showMediumNotes"
-      (change)="onChangeShowNotes($event.checked, 'showMediumNotes')"
+      [(ngModel)]="showSharpNotes"
+      (change)="onChangeShowNotes($event.checked, 'showSharpNotes')"
     ></mat-checkbox>
   </div>
 
@@ -43,13 +43,21 @@
       </mat-select>
     </mat-form-field>
 
-    <button (click)="openPalette()" style="margin-left: 15px;" mat-mini-fab isRoundButton="true">
+    <button
+      (click)="openPalette()"
+      isRoundButton="true"
+      matTooltip="Create new theme"
+      mat-mini-fab
+      style="margin-left: 15px;"
+    >
       <mat-icon>palette</mat-icon>
     </button>
   </div>
 </div>
 
-<div class="canvas-wrapper">
-  <canvas #canvas class="canvas" style="border:0px solid #000000;">
-  </canvas>
+<div class="content">
+  <div class="canvas-wrapper">
+    <canvas #fretLayer class="canvas"></canvas>
+    <canvas #noteLayer class="canvas"></canvas>
+  </div>
 </div>

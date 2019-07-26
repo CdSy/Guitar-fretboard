@@ -56,8 +56,10 @@ export class PaletteComponent implements OnInit {
   }
 
   cancelTheme() {
-    this.themeName = '';
-    this.activeChange.emit(false);
-    this.cancel.emit();
+    if (this.isActive) {
+      this.themeName = '';
+      this.activeChange.emit(false);
+      this.cancel.emit();
+    }
   }
 }

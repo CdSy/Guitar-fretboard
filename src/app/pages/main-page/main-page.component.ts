@@ -1,6 +1,6 @@
 import { Component, OnInit, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
 import { FretboardDrawerService, ColorPalette, scaleSequences } from '../../modules/fretboard-canvas/fretboard-drawer.service';
-import { CustomTheme } from '../../components/palette/palette.component';
+import { CustomTheme } from '../../modules/palette/palette.component';
 import { StorageService } from '../../services/storage.service';
 
 class SelectOption {
@@ -29,9 +29,9 @@ const theme: ColorPalette = {
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class MainPageComponent implements OnInit {
-  public showBaseNotes = true;
-  public showMediumNotes = false;
-  public amountOfStrings = 6;
+  public showFlatNotes = true;
+  public showSharpNotes = true;
+  public numberOfStrings = 6;
   public currentTheme = 'dark';
   public isOpenPalette = false;
 
@@ -67,31 +67,41 @@ export class MainPageComponent implements OnInit {
     },
   };
 
-  @ViewChild('canvas', { static: true }) canvas: ElementRef<HTMLCanvasElement>;
+  @ViewChild('fretLayer', { static: true }) fretLayer: ElementRef<HTMLCanvasElement>;
+  @ViewChild('noteLayer', { static: true }) noteLayer: ElementRef<HTMLCanvasElement>;
 
   constructor(private drawer: FretboardDrawerService, private storage: StorageService) {
     // Get from local storage
     const themesFromStorage = this.storage.get('themes');
     const themeOptionsFromStorage = this.storage.get('themeOptions');
+    const themeNameFromStorage = this.storage.get('themeName');
+    const numberOfStringsFromStorage = this.storage.get('numberOfStrings');
 
+    this.numberOfStrings = numberOfStringsFromStorage || this.numberOfStrings;
+    this.currentTheme = themeNameFromStorage || this.currentTheme;
     this.themes = themesFromStorage ? {...themesFromStorage} : this.themes;
     this.themeOptions = themeOptionsFromStorage ? [...themeOptionsFromStorage] : this.themeOptions;
   }
 
   ngOnInit() {
-    const canvas = this.canvas.nativeElement;
+    const fretLayer = this.fretLayer.nativeElement;
+    const noteLayer = this.noteLayer.nativeElement;
 
     this.drawer.initialize({
-      canvas,
+      fretLayer,
+      noteLayer,
       theme: this.themes[this.currentTheme],
-      showBaseNotes: this.showBaseNotes,
-      showMediumNotes: this.showMediumNotes
+      showFlatNotes: this.showFlatNotes,
+      showSharpNotes: this.showSharpNotes,
+      numberOfStrings: this.numberOfStrings
     });
-    // this.drawer.drawScale(scaleSequences.minor);
+
+    this.drawer.changeScale(scaleSequences.minor);
   }
 
   onChangeStrings(value: number) {
     this.drawer.changeStringAmount(value);
+    this.storage.set('numberOfStrings', value);
   }
 
   onChangeShowNotes(value: boolean, type: string) {
@@ -100,6 +110,7 @@ export class MainPageComponent implements OnInit {
 
   onChangeTheme(value: string) {
     this.drawer.changeTheme(this.themes[value]);
+    this.storage.set('themeName', value);
   }
 
   onChangeColor(newTheme: ColorPalette) {

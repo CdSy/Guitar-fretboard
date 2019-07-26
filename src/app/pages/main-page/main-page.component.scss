@@ -4,13 +4,21 @@
 }
 
 .canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  height: 150px;
+  height: 100%;
+}
+
+.content {
+  padding: 15px 20px;
 }
 
 .canvas-wrapper {
+  position: relative;
   width: 100%;
-  padding: 15px 20px;
+  height: 300px;
   overflow-x: auto;
   box-sizing: border-box;
 }
