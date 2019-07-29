@@ -1,4 +1,5 @@
 import { Component, OnInit, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+
 import { FretboardDrawerService, ColorPalette, scaleSequences } from '../../modules/fretboard-canvas/fretboard-drawer.service';
 import { CustomTheme } from '../../modules/palette/palette.component';
 import { StorageService } from '../../services/storage.service';
@@ -32,6 +33,7 @@ export class MainPageComponent implements OnInit {
   public showFlatNotes = true;
   public showSharpNotes = true;
   public numberOfStrings = 6;
+  public numberOfFrets = 24;
   public currentTheme = 'dark';
   public isOpenPalette = false;
 
@@ -46,6 +48,7 @@ export class MainPageComponent implements OnInit {
   public themeOptions: Array<SelectOption> = [
     {value: 'dark', label: 'Dark'},
     {value: 'light', label: 'Light'},
+    {value: 'violet', label: 'Violet'},
   ];
 
   public themes = {
@@ -65,6 +68,14 @@ export class MainPageComponent implements OnInit {
       fundamental: '#1e9ee0',
       scale: '#80e488'
     },
+    'violet': {
+      dot: '#f01414',
+      fret: '#fcfcfc',
+      fundamental: '#1e9ee0',
+      neck: '#1e3e80',
+      scale: '#80e488',
+      string: '#b5b5b5'
+    },
   };
 
   @ViewChild('fretLayer', { static: true }) fretLayer: ElementRef<HTMLCanvasElement>;
@@ -76,8 +87,10 @@ export class MainPageComponent implements OnInit {
     const themeOptionsFromStorage = this.storage.get('themeOptions');
     const themeNameFromStorage = this.storage.get('themeName');
     const numberOfStringsFromStorage = this.storage.get('numberOfStrings');
+    const numberOfFretsFromStorage = this.storage.get('numberOfFrets');
 
     this.numberOfStrings = numberOfStringsFromStorage || this.numberOfStrings;
+    this.numberOfFrets = numberOfFretsFromStorage || this.numberOfFrets;
     this.currentTheme = themeNameFromStorage || this.currentTheme;
     this.themes = themesFromStorage ? {...themesFromStorage} : this.themes;
     this.themeOptions = themeOptionsFromStorage ? [...themeOptionsFromStorage] : this.themeOptions;
@@ -93,7 +106,8 @@ export class MainPageComponent implements OnInit {
       theme: this.themes[this.currentTheme],
       showFlatNotes: this.showFlatNotes,
       showSharpNotes: this.showSharpNotes,
-      numberOfStrings: this.numberOfStrings
+      numberOfStrings: this.numberOfStrings,
+      numberOfFrets: this.numberOfFrets
     });
 
     this.drawer.changeScale(scaleSequences.minor);
@@ -102,6 +116,18 @@ export class MainPageComponent implements OnInit {
   onChangeStrings(value: number) {
     this.drawer.changeStringAmount(value);
     this.storage.set('numberOfStrings', value);
+  }
+
+  onChangeFret(event: any) {
+    const value = Number(event.target.value);
+    event.target.value = Math.max(0, Math.min(24, value));
+    this.numberOfFrets = event.target.value;
+    event.preventDefault();
+
+    if (this.numberOfFrets > 0) {
+      this.drawer.changeFret(this.numberOfFrets);
+      this.storage.set('numberOfFrets', this.numberOfFrets);
+    }
   }
 
   onChangeShowNotes(value: boolean, type: string) {

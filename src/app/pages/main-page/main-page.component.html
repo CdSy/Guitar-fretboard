@@ -8,7 +8,7 @@
 </app-palette>
 
 <div class="controls">
-  <mat-form-field>
+  <mat-form-field style="width: 100px;">
     <mat-label>Strings</mat-label>
     <mat-select [(ngModel)]="numberOfStrings" (selectionChange)="onChangeStrings($event.value)" name="strings">
       <mat-option *ngFor="let string of stringOptions" [value]="string.value">
@@ -16,6 +16,22 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
+
+  <div class="form-field">
+    <mat-form-field class="text-field" style="width: 55px;">
+      <mat-label>Frets</mat-label>
+      <input
+        matInput
+        type="number"
+        maxlength="2"
+        min="1"
+        max="24"
+        [(ngModel)]="numberOfFrets"
+        (input)="onChangeFret($event)"
+      />
+      <mat-error>Incorrect use 1-24</mat-error>
+    </mat-form-field>
+  </div>
 
   <div class="form-field">
     <label class="field-label">Show flat notes</label>
@@ -34,7 +50,7 @@
   </div>
 
   <div class="form-field">
-    <mat-form-field>
+    <mat-form-field style="width: 100px;">
       <mat-label>Theme</mat-label>
       <mat-select [(ngModel)]="currentTheme" (selectionChange)="onChangeTheme($event.value)" name="theme">
         <mat-option *ngFor="let theme of themeOptions" [value]="theme.value">

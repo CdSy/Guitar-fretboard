@@ -1,10 +1,11 @@
+import { Injectable } from '@angular/core';
 import { Observable, fromEvent } from 'rxjs';
 import { map } from 'rxjs/operators';
-import { INote } from './note';
+import { IViewNote } from './models';
 
 export class SyntheticEvent {
-  target: INote | undefined;
-  srcEvent: Event;
+  target: IViewNote | undefined;
+  srcEvent: PointerEvent;
 
   constructor({target, srcEvent}) {
     this.target = target;
@@ -12,8 +13,9 @@ export class SyntheticEvent {
   }
 }
 
+@Injectable()
 export class EventManager {
-  elements: Array<INote>;
+  elements: Array<IViewNote>;
 
   constructor() {
     this.elements = new Array();
@@ -29,7 +31,7 @@ export class EventManager {
     );
   }
 
-  findElement(x: number, y: number): INote | undefined {
+  findElement(x: number, y: number): IViewNote | undefined {
     const element = this.elements.find(el => {
       return this.isIntersect({x, y}, el);
     });
@@ -43,6 +45,15 @@ export class EventManager {
 
   registerElement(element: any) {
     this.elements.push(element);
+  }
+
+  registerElements(elements: Array<any>) {
+    const registeredElements = elements.reduce((notes, string) => {
+      notes.push(...string.filter(note => note.display));
+      return notes;
+    }, []);
+
+    this.elements.push(...registeredElements);
   }
 
   clearElements() {

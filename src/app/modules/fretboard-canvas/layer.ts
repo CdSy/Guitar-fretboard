@@ -1,9 +1,4 @@
-interface ILayerRect {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
+import { ILayerRect } from './models';
 
 export class CanvasLayer {
   canvas: HTMLCanvasElement;

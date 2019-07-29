@@ -1,23 +1,12 @@
-export interface INote {
-  context: CanvasRenderingContext2D;
-  x: number;
-  y: number;
-  radius: number;
-  fret: number;
-  name: string;
-  type: number;
-  isFundamental: boolean;
-  inScale: boolean;
-  bgColor: string;
-  color: string;
-}
+import { IViewNote } from './models';
 
-export class NoteElement implements INote {
+export class NoteElement implements IViewNote {
   context: CanvasRenderingContext2D;
   x: number;
   y: number;
   radius: number;
   fret: number;
+  string: number;
   name: string;
   type: number;
   display: boolean;
@@ -31,6 +20,7 @@ export class NoteElement implements INote {
     x,
     y,
     fret,
+    string,
     name,
     type,
     display,
@@ -42,8 +32,9 @@ export class NoteElement implements INote {
     this.context = context;
     this.x = x;
     this.y = y;
-    this.radius = 8;
+    this.radius = 10;
     this.fret = fret;
+    this.string = string;
     this.name = name;
     this.type = type;
     this.display = display;
@@ -55,7 +46,7 @@ export class NoteElement implements INote {
 
   draw() {
     if (this.display) {
-      this.context.font = '8px Helvetica';
+      this.context.font = '10px Helvetica';
       this.context.textAlign = 'center';
       this.context.textBaseline = 'middle';
 

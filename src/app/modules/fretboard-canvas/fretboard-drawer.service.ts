@@ -1,37 +1,14 @@
 import { Injectable } from '@angular/core';
 import { Observable, BehaviorSubject, fromEvent } from 'rxjs';
 import { filter, repeat, take, takeUntil, switchMap } from 'rxjs/operators';
-import { EventManager, SyntheticEvent } from './event-manager';
+import { EventManager, SyntheticEvent } from './event-manager.service';
+import { NoteTypes } from './models';
 import { Fret } from './fret';
 import { NoteElement } from './note';
+import { Notes } from './notes';
 import { CanvasLayer } from './layer';
 
-export enum NoteTypes {
-  base,
-  sharp
-}
-
-interface Note {
-  name: string;
-  bgColor: string;
-  color: string;
-  type: number;
-}
-
-const NOTES: Array<Note> = [
-  {name: 'C', bgColor: '#01e70b', color: '#fff', type: NoteTypes.base},
-  {name: 'C#', bgColor: '#02fea9', color: '#000', type: NoteTypes.sharp},
-  {name: 'D', bgColor: '#006cfd', color: '#fff', type: NoteTypes.base},
-  {name: 'D#', bgColor: '#3003f2', color: '#fff', type: NoteTypes.sharp},
-  {name: 'E', bgColor: '#8001ce', color: '#fff', type: NoteTypes.base},
-  {name: 'F', bgColor: '#3f0250', color: '#fff', type: NoteTypes.base},
-  {name: 'F#', bgColor: '#6c0056', color: '#fff', type: NoteTypes.sharp},
-  {name: 'G', bgColor: '#db0000', color: '#fff', type: NoteTypes.base},
-  {name: 'G#', bgColor: '#db411b', color: '#fff', type: NoteTypes.sharp},
-  {name: 'A', bgColor: '#ff8800', color: '#fff', type: NoteTypes.base},
-  {name: 'A#', bgColor: '#ecfe08', color: '#000', type: NoteTypes.sharp},
-  {name: 'B', bgColor: '#9af301', color: '#000', type: NoteTypes.base},
-];
+const NOTES: Notes = new Notes();
 
 const DEFAULT_TUNING = [4, 11, 7, 2, 9, 4, 11, 6, 1, 8];
 
@@ -42,6 +19,7 @@ export interface InitializeParams {
   showFlatNotes?: boolean;
   showSharpNotes?: boolean;
   numberOfStrings?: number;
+  numberOfFrets?: number;
 }
 
 @Injectable()
@@ -51,6 +29,7 @@ export class FretboardDrawerService {
 
   theme: ColorPalette;
   ratio: number;
+  edgeDistance: number;
   numberOfFrets: number;
   numberOfStrings: number;
   gapBetweenStrings: number;
@@ -62,8 +41,6 @@ export class FretboardDrawerService {
   paddingBottom: number;
   fretLayer: CanvasLayer;
   noteLayer: CanvasLayer;
-  fretLayerCtx: CanvasRenderingContext2D;
-  noteLayerCtx: CanvasRenderingContext2D;
 
   resize$ = fromEvent(window, 'resize');
   pointerDown$: Observable<SyntheticEvent>;
@@ -79,6 +56,16 @@ export class FretboardDrawerService {
   showFlatNotes: boolean;
   showSharpNotes: boolean;
 
+  // Animate state
+  noteOffset: number;
+  currentString: number;
+  currentStringTuning: number;
+  fretWidth: number;
+  shiftX: number;
+  shiftY: number;
+  startPointX: number;
+  startPointY: number;
+
   constructor(private eventManager: EventManager) {
     // this is an approxumation of the tempered scale
     // geometric progression ratio 2^(1/12)
@@ -89,19 +76,22 @@ export class FretboardDrawerService {
     this.resize$.subscribe(_ => this.redraw());
   }
 
-  public initialize({fretLayer, noteLayer, theme, showFlatNotes = true, showSharpNotes = true, numberOfStrings = 6}: InitializeParams) {
-    this.numberOfFrets = 24;
+  public initialize({
+    fretLayer, noteLayer, showFlatNotes = true, showSharpNotes = true, numberOfStrings = 6, numberOfFrets = 24, theme
+  }: InitializeParams) {
+    this.edgeDistance = 10;
     this.gapBetweenStrings = 28;
-    this.paddingLeft = 0;
+    this.paddingLeft = 26;
     this.paddingTop = 20;
-    this.paddingRight = 20;
-    this.paddingBottom = 20;
+    this.paddingRight = 0;
+    this.paddingBottom = 25;
+    this.numberOfFrets = numberOfFrets;
     this.numberOfStrings = numberOfStrings;
     this.showFlatNotes = showFlatNotes;
     this.showSharpNotes = showSharpNotes;
 
     const width = Number(getComputedStyle(fretLayer).getPropertyValue('width').slice(0, -2));
-    const height = 12 + (this.paddingTop * 2) + (this.gapBetweenStrings * (this.numberOfStrings - 1));
+    const height = this.calculateHeight();
     const commonParams = {
       width,
       height,
@@ -128,7 +118,16 @@ export class FretboardDrawerService {
     this.pointerDown$.pipe(
       filter((event: SyntheticEvent) => event.target !== undefined)
     ).subscribe((event: SyntheticEvent) => {
-      console.log(event, 'CLICK');
+      const target = event.target;
+      const x = target.x;
+      const y = target.y;
+
+      this.shiftX =  x - event.srcEvent.layerX;
+      this.shiftY = y - event.srcEvent.layerY;
+      this.startPointX = x;
+      this.startPointY = y;
+      this.currentStringTuning = this.tuning[target.string];
+      this.currentString = target.string;
     });
 
     this.pointerDown$.pipe(
@@ -137,7 +136,103 @@ export class FretboardDrawerService {
       takeUntil(this.pointerUp$),
       repeat()
     ).subscribe((event: SyntheticEvent) => {
-      console.log(event, 'MOVE');
+      const { x: padding } = this.noteLayer.getRect();
+      const pointerX = event.srcEvent.layerX + this.shiftX - padding; // Cursor position with shift related on note position
+      const stringNumber = this.currentString;
+
+      const startFret = Math.ceil(this.startPointX / this.fretWidth);
+      const currenFret = Math.ceil(pointerX / this.fretWidth);
+      const fretDifference = startFret - currenFret; // How many frets passed from start
+      const newStringTuning = NOTES.findNextIndex(this.tuning[stringNumber], fretDifference); // Set new start note
+      const noteOffset = pointerX - ((currenFret * this.fretWidth) - (this.fretWidth / 2)); // Offset from X point of center of fret
+      const fretsLength = this.frets.length;
+      let firstFretCenterX: number;
+      let lastFretCenterX: number;
+
+      this.noteOffset = noteOffset;
+      this.currentStringTuning = newStringTuning;
+      this.notes[stringNumber] = new Array(fretsLength + 2); // +2 for left and right notes
+
+      for (let fret = 0; fret < fretsLength; fret++) {
+        const { x, width } = this.frets[fret];
+        const y = this.frets[fret].findY(stringNumber) + 1; // 1px == half of string height
+        const center = (x - 1.5) + width / 2;
+
+        if (fret === 0) {
+          firstFretCenterX = center;
+        }
+
+        if (fret === fretsLength - 1) {
+          lastFretCenterX = center;
+        }
+
+        const note = NOTES.findNext(this.currentStringTuning + 1, fret);
+        const { name, type, bgColor, color } = note;
+
+        const showNote = type === NoteTypes.base && this.showFlatNotes ||
+          type === NoteTypes.sharp && this.showSharpNotes;
+
+        this.notes[stringNumber][fret] = new NoteElement({
+          context: this.noteLayer.context,
+          x: center + noteOffset,
+          y,
+          fret,
+          string: stringNumber,
+          name,
+          type,
+          display: showNote,
+          isFundamental: false,
+          inScale: false,
+          bgColor,
+          color,
+        });
+      }
+
+      // Left
+      const { y } = this.noteLayer.getRect();
+      const pointY = (this.edgeDistance + this.gapBetweenStrings * stringNumber) + y + 1;
+      const note = NOTES[this.currentStringTuning];
+
+      const showNote = note.type === NoteTypes.base && this.showFlatNotes ||
+        note.type === NoteTypes.sharp && this.showSharpNotes;
+
+      this.notes[stringNumber].push(new NoteElement({
+        context: this.noteLayer.context,
+        x: (firstFretCenterX - this.fretWidth) + noteOffset,
+        y: pointY,
+        fret: -1,
+        string: stringNumber,
+        name: note.name,
+        type: note.type,
+        display: showNote,
+        isFundamental: false,
+        inScale: false,
+        bgColor: note.bgColor,
+        color: note.color,
+      }));
+
+      // Right
+      const note2 = NOTES.findNext(this.currentStringTuning, this.numberOfFrets);
+
+      const showNote2 = note2.type === NoteTypes.base && this.showFlatNotes ||
+        note2.type === NoteTypes.sharp && this.showSharpNotes;
+
+      this.notes[stringNumber].push(new NoteElement({
+        context: this.noteLayer.context,
+        x: (lastFretCenterX + this.fretWidth) + noteOffset,
+        y: pointY,
+        fret: -1,
+        string: stringNumber,
+        name: note2.name,
+        type: note2.type,
+        display: showNote2,
+        isFundamental: false,
+        inScale: false,
+        bgColor: note2.bgColor,
+        color: note2.color,
+      }));
+
+      this.redrawNotes();
     });
 
     this.pointerDown$.pipe(
@@ -146,8 +241,27 @@ export class FretboardDrawerService {
       take(1),
       repeat()
     ).subscribe((event: SyntheticEvent) => {
+      const notesForListener = this.notes.reduce((notes, string) => {
+        notes.push(...string.filter(note => note.display));
+        return notes;
+      }, []);
+
       console.log(event, 'UP');
+      this.shiftX =  0;
+      this.shiftY = 0;
+      this.startPointX = 0;
+      this.startPointY = 0;
+      this.tuning[this.currentString] = this.currentStringTuning;
+      this.drawNut();
+      this.eventManager.clearElements();
+      this.eventManager.registerElements(notesForListener);
     });
+  }
+
+  private redrawNotes() {
+    this.noteLayer.clear();
+    this.notes.forEach(string => string.forEach(note => note.draw()));
+    this.drawNut();
   }
 
   private redraw() {
@@ -160,8 +274,7 @@ export class FretboardDrawerService {
 
   private drawNotes() {
     const stringsLength = this.numberOfStrings;
-    const fretsLength = this.frets.length;
-    const allNotesLength = NOTES.length - 1;
+    const fretsLength = this.numberOfFrets;
     const strings = new Array(stringsLength);
 
     for (let string = 0; string < stringsLength; string++) {
@@ -170,16 +283,9 @@ export class FretboardDrawerService {
 
       for (let fret = 0; fret < fretsLength; fret++) {
         const { x, width } = this.frets[fret];
-        const y = this.frets[fret].findY(string);
-        const center = x + width / 2;
-        const fretNumber = fret > 11 ? fret - 12 : fret;
-        let indexOfNextNote = baseNote + fretNumber;
-
-        if (indexOfNextNote > allNotesLength) {
-          indexOfNextNote = (indexOfNextNote - allNotesLength) - 1;
-        }
-
-        const note = NOTES[indexOfNextNote];
+        const y = this.frets[fret].findY(string) + 1; // 1px == half of string height
+        const center = (x - 1.5) + width / 2; // 1.5px == half of nut width
+        const note = NOTES.findNext(baseNote, fret);
         const { name, type, bgColor, color } = note;
 
         const showNote = type === NoteTypes.base && this.showFlatNotes ||
@@ -190,6 +296,7 @@ export class FretboardDrawerService {
           x: center,
           y,
           fret,
+          string: string,
           name,
           type,
           display: showNote,
@@ -209,6 +316,7 @@ export class FretboardDrawerService {
 
     this.notes = strings;
     this.notes.forEach(string => string.forEach(note => note.draw()));
+    this.drawNut();
   }
 
   // public drawScale(scalePattern: Array<number>, fromFret: number = 3, span: number = 8) {
@@ -237,13 +345,77 @@ export class FretboardDrawerService {
   //   } while (string >= 0 && --span > 0);
   // }
 
+  roundRect(ctx: CanvasRenderingContext2D, options) {
+    const { x, y, width, height, radius = [4, 4, 4, 4], color, fill = true, stroke = false } = options;
+
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.fillStyle = color;
+    ctx.moveTo(x + radius[0], y);
+    ctx.lineTo(x + width - radius[1], y);
+    ctx.quadraticCurveTo(x + width, y, x + width, y + radius[1]);
+    ctx.lineTo(x + width, y + height - radius[2]);
+    ctx.quadraticCurveTo(x + width, y + height, x + width - radius[2], y + height);
+    ctx.lineTo(x + radius[3], y + height);
+    ctx.quadraticCurveTo(x, y + height, x, y + height - radius[3]);
+    ctx.lineTo(x, y + radius[0]);
+    ctx.quadraticCurveTo(x, y, x + radius[0], y);
+    ctx.closePath();
+
+    if (fill) {
+      ctx.fill();
+    }
+
+    if (stroke) {
+      ctx.stroke();
+    }
+  }
+
+  private drawNut() {
+    const {x , y, height } = this.noteLayer.getRect();
+
+    this.roundRect(this.noteLayer.context, {
+      x: 0,
+      y: y,
+      width: x,
+      height: height,
+      radius: [8, 0 , 0, 8],
+      color: '#565656'
+    });
+
+    for (let string = 0; string < this.numberOfStrings; string++) {
+      const pointY = (this.edgeDistance + this.gapBetweenStrings * string) + y + 1;
+      const baseNote = NOTES[this.tuning[string]];
+      const { name, type } = baseNote;
+
+      const note = new NoteElement({
+        context: this.noteLayer.context,
+        x: x / 2,
+        y: pointY,
+        fret: 0,
+        string: string,
+        name,
+        type,
+        display: true,
+        isFundamental: false,
+        inScale: false,
+        bgColor: '#fff',
+        color: '#000',
+      });
+
+      note.draw();
+    }
+  }
+
   private drawFretboard() {
     const {x , y, width, height } = this.fretLayer.getRect();
-    let from = width + (width * 0.3);
-    const originWidth = x + width + (width * 0.3);
+    this.frets = new Array(this.numberOfFrets);
+    let from = width;
+    const originWidth = x + width;
+    const fretWidth = width / this.numberOfFrets;
+    this.fretWidth = fretWidth;
 
     for (let i = 0; i < this.numberOfFrets; i++) {
-      const fretWidth = from * (1 - this.ratio);
       const dot = [3, 5, 7, 9, 12, 15, 17, 19, 21, 23].indexOf(i + 1) >= 0;
 
       this.frets[i] = new Fret({
@@ -254,6 +426,7 @@ export class FretboardDrawerService {
         height: height,
         numberOfStrings: this.numberOfStrings,
         gapBetweenStrings: this.gapBetweenStrings,
+        edgeDistance: this.edgeDistance,
         dot: dot,
         theme: this.theme
       });
@@ -264,15 +437,28 @@ export class FretboardDrawerService {
     this.frets.forEach((entry, index) => entry.draw(index));
   }
 
+  private calculateHeight() {
+    const height = (this.edgeDistance * 2 + 2) +
+      (this.paddingTop + this.paddingBottom) +
+      (this.gapBetweenStrings * (this.numberOfStrings - 1));
+
+    return height;
+  }
+
   public changeStringAmount(value: number) {
     this.numberOfStrings = value;
 
     // Recalculate height. const 12 is gaps on the sides of the neck (10px) + height of last string (2px)
-    const height = 12 + (this.paddingTop + this.paddingBottom) + (this.gapBetweenStrings * (this.numberOfStrings - 1));
+    const height = this.calculateHeight();
 
     this.fretLayer.height = height;
     this.noteLayer.height = height;
 
+    this.redraw();
+  }
+
+  public changeFret(value: number) {
+    this.numberOfFrets = value;
     this.redraw();
   }
 

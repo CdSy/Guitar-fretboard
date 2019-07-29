@@ -8,6 +8,7 @@ export class Fret {
   private context: CanvasRenderingContext2D;
   private numberOfStrings: number;
   private gapBetweenStrings: number;
+  private edgeDistance: number;
   private dot: boolean;
   private theme: ColorPalette;
 
@@ -19,6 +20,7 @@ export class Fret {
     height,
     numberOfStrings,
     gapBetweenStrings,
+    edgeDistance,
     dot,
     theme
   }) {
@@ -29,31 +31,18 @@ export class Fret {
     this.height = height;
     this.gapBetweenStrings = gapBetweenStrings;
     this.numberOfStrings = numberOfStrings;
+    this.edgeDistance = edgeDistance;
     this.dot = dot;
     this.theme = theme;
   }
 
   public draw(index: number): void {
-    // the dot
-    if (this.dot === true) {
-      this.context.beginPath();
-      this.context.fillStyle = this.theme.dot;
-      this.context.arc(this.x + this.width / 2, this.height + (this.y * 1.5), 3, 0, 2 * Math.PI);
-      this.context.fill();
-    }
-
     // the neck
     this.context.beginPath();
     this.context.fillStyle = this.theme.neck;
     this.context.fillRect(this.x, this.y, this.width, this.height);
 
-    if (index === 0 ) {
-      // Draw zero nut
-      this.context.fillStyle = this.theme.fret;
-      this.context.fillRect(0, this.y, 5, this.height);
-    }
-
-    // the nut
+    // the fret
     this.context.fillStyle = this.theme.fret;
     this.context.fillRect(this.x + this.width - 3, this.y, 3, this.height);
 
@@ -65,9 +54,28 @@ export class Fret {
     }
 
     this.context.fill();
+
+    // the dot
+    if (this.dot === true) {
+      this.context.font = '8px Helvetica';
+      this.context.textAlign = 'center';
+      this.context.textBaseline = 'middle';
+
+      this.context.beginPath();
+      this.context.fillStyle = this.theme.dot;
+      this.context.arc(this.x + this.width / 2, this.height + (this.y * 1.8), 8, 0, 2 * Math.PI);
+      this.context.fill();
+
+      this.context.fillStyle = '#fff';
+      this.context.fillText(String(index + 1), this.x + this.width / 2, this.height + (this.y * 1.8));
+    }
   }
 
   public findY(number: number): number {
-    return (5 + this.gapBetweenStrings * number) + this.y;
+    return (this.edgeDistance + this.gapBetweenStrings * number) + this.y;
+  }
+
+  public get center() {
+    return (this.x - 1.5) + (this.width / 2); // 1.5px == half of nut width
   }
 }
