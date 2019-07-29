@@ -1,5 +1,5 @@
 import { Component, OnInit, Input, Output, EventEmitter, ChangeDetectionStrategy } from '@angular/core';
-import { ColorPalette } from '../../modules/fretboard-canvas/fretboard-drawer.service';
+import { ColorPalette } from '../../modules/fretboard-canvas';
 
 export interface CustomTheme extends ColorPalette {
   name: string;

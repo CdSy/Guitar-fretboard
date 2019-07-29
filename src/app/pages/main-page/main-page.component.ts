@@ -1,6 +1,8 @@
-import { Component, OnInit, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
-import { FretboardDrawerService, ColorPalette, scaleSequences } from '../../modules/fretboard-canvas/fretboard-drawer.service';
+import { FretboardDrawerService, ColorPalette, scaleSequences } from '../../modules/fretboard-canvas';
 import { CustomTheme } from '../../modules/palette/palette.component';
 import { StorageService } from '../../services/storage.service';
 
@@ -9,7 +11,7 @@ class SelectOption {
   label: string;
 
   constructor({value, label}) {
-    this.value = value.toLowerCase();
+    this.value = value;
     this.label = label;
   }
 }
@@ -29,7 +31,8 @@ const theme: ColorPalette = {
   styleUrls: ['./main-page.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class MainPageComponent implements OnInit {
+export class MainPageComponent implements OnInit, OnDestroy {
+  private onDestroy$ = new Subject<void>();
   public showFlatNotes = true;
   public showSharpNotes = true;
   public numberOfStrings = 6;
@@ -99,6 +102,7 @@ export class MainPageComponent implements OnInit {
   ngOnInit() {
     const fretLayer = this.fretLayer.nativeElement;
     const noteLayer = this.noteLayer.nativeElement;
+    const tuningFromStorage = this.storage.get('tuning');
 
     this.drawer.initialize({
       fretLayer,
@@ -107,10 +111,19 @@ export class MainPageComponent implements OnInit {
       showFlatNotes: this.showFlatNotes,
       showSharpNotes: this.showSharpNotes,
       numberOfStrings: this.numberOfStrings,
-      numberOfFrets: this.numberOfFrets
+      numberOfFrets: this.numberOfFrets,
+      tuning: tuningFromStorage
     });
 
+    this.drawer.getCurrentTuning().pipe(takeUntil(this.onDestroy$))
+      .subscribe(tuning => this.storage.set('tuning', tuning));
+
     this.drawer.changeScale(scaleSequences.minor);
+  }
+
+  ngOnDestroy() {
+    this.onDestroy$.next();
+    this.onDestroy$.complete();
   }
 
   onChangeStrings(value: number) {
@@ -153,7 +166,7 @@ export class MainPageComponent implements OnInit {
     }
 
     const { name, ...colors } = newTheme;
-    const selectOption = new SelectOption({value: name, label: name});
+    const selectOption = new SelectOption({value: name.toLowerCase(), label: name});
     this.themeOptions = [...this.themeOptions, selectOption];
     this.themes[selectOption.value] = colors;
     this.currentTheme = selectOption.value;

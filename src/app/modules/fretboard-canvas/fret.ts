@@ -1,4 +1,4 @@
-import { ColorPalette } from './fretboard-drawer.service';
+import { ColorPalette } from './models';
 
 export class Fret {
   public x: number;
@@ -76,6 +76,6 @@ export class Fret {
   }
 
   public get center() {
-    return (this.x - 1.5) + (this.width / 2); // 1.5px == half of nut width
+    return this.x + (this.width / 2);
   }
 }

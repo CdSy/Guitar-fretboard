@@ -19,6 +19,7 @@ export interface IViewNote extends INote {
   string: number;
   isFundamental: boolean;
   inScale: boolean;
+  isActive?: boolean;
 }
 
 export interface ILayerRect {
@@ -26,4 +27,13 @@ export interface ILayerRect {
   y: number;
   width: number;
   height: number;
+}
+
+export interface ColorPalette {
+  neck?: string;
+  dot?: string;
+  fret?: string;
+  string?: string;
+  fundamental?: string;
+  scale?: string;
 }

@@ -1,8 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, BehaviorSubject, Subject, fromEvent } from 'rxjs';
-import { filter, repeat, take, takeUntil, switchMap, timestamp } from 'rxjs/operators';
+import { Observable, Subject, fromEvent, timer } from 'rxjs';
+import { filter, repeat, take, takeUntil, switchMap } from 'rxjs/operators';
 import { EventManager, SyntheticEvent } from './event-manager.service';
-import { NoteTypes } from './models';
+import { NoteTypes, ColorPalette } from './models';
 import { Fret } from './fret';
 import { NoteElement } from './note';
 import { Notes } from './notes';
@@ -20,6 +20,7 @@ export interface InitializeParams {
   showSharpNotes?: boolean;
   numberOfStrings?: number;
   numberOfFrets?: number;
+  tuning?: Array<number>;
 }
 
 @Injectable()
@@ -44,18 +45,21 @@ export class FretboardDrawerService implements OnDestroy {
 
   onDestroy$ = new Subject<void>();
   resize$ = fromEvent(window, 'resize');
+  clickOnElement$: Observable<SyntheticEvent>;
+  longClick$: Observable<SyntheticEvent>;
   pointerDown$: Observable<SyntheticEvent>;
   pointerMove$: Observable<SyntheticEvent>;
   pointerUp$: Observable<SyntheticEvent>;
 
 
   // State
-  tuning$ = new BehaviorSubject<Array<number>>(DEFAULT_TUNING);
-  tuning: Array<number> = DEFAULT_TUNING;
+  tuning$ = new Subject<Array<number>>();
+  tuning: Array<number>;
   currentScale: Array<number>;
   scaleFromFret: number;
   showFlatNotes: boolean;
   showSharpNotes: boolean;
+  tonic: string;
 
   // Animate state
   noteOffset: number;
@@ -83,7 +87,14 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   public initialize({
-    fretLayer, noteLayer, showFlatNotes = true, showSharpNotes = true, numberOfStrings = 6, numberOfFrets = 24, theme
+    fretLayer,
+    noteLayer,
+    showFlatNotes = true,
+    showSharpNotes = true,
+    numberOfStrings = 6,
+    numberOfFrets = 24,
+    tuning = DEFAULT_TUNING,
+    theme
   }: InitializeParams) {
     this.edgeDistance = 10;
     this.gapBetweenStrings = 28;
@@ -95,6 +106,7 @@ export class FretboardDrawerService implements OnDestroy {
     this.numberOfStrings = numberOfStrings;
     this.showFlatNotes = showFlatNotes;
     this.showSharpNotes = showSharpNotes;
+    this.tuning = tuning;
 
     const width = Number(getComputedStyle(fretLayer).getPropertyValue('width').slice(0, -2));
     const height = this.calculateHeight();
@@ -126,7 +138,20 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   private subscribeToEvents() {
-    this.pointerDown$.subscribe((event: SyntheticEvent) => {
+    this.clickOnElement$ = this.pointerDown$.pipe(
+      switchMap(() => this.pointerUp$.pipe(takeUntil(timer(100))))
+    );
+
+    this.clickOnElement$.subscribe((event: SyntheticEvent) => this.drawScale(event));
+
+    this.longClick$ = this.pointerDown$.pipe(
+      switchMap(
+        () => timer(300).pipe(takeUntil(this.pointerUp$)),
+        (outerValue) => outerValue
+      )
+    );
+
+    this.longClick$.subscribe((event: SyntheticEvent) => {
       const target = event.target;
       const x = target.x;
       const y = target.y;
@@ -137,15 +162,16 @@ export class FretboardDrawerService implements OnDestroy {
       this.startPointY = y;
       this.currentStringTuning = this.tuning[target.string];
       this.currentString = target.string;
+      this.moveNotes(event);
     });
 
-    this.pointerDown$.pipe(
+    this.longClick$.pipe(
       switchMap(() => this.pointerMove$),
       takeUntil(this.pointerUp$),
       repeat()
     ).subscribe((event: SyntheticEvent) => this.moveNotes(event));
 
-    this.pointerDown$.pipe(
+    this.longClick$.pipe(
       switchMap(() => this.pointerUp$),
       take(1),
       repeat()
@@ -155,6 +181,7 @@ export class FretboardDrawerService implements OnDestroy {
       this.startPointX = 0;
       this.startPointY = 0;
       this.tuning[this.currentString] = this.currentStringTuning;
+      this.tuning$.next(this.tuning);
 
       this.alignAnimate(200).subscribe(_ => {
         this.eventManager.clearElements();
@@ -180,7 +207,9 @@ export class FretboardDrawerService implements OnDestroy {
     this.notes[stringNumber] = new Array(fretsLength + 2); // +2 for left and right notes
 
     for (let fret = 0; fret < fretsLength; fret++) {
-      this.notes[stringNumber][fret] = this.createNoteForFret(this.currentStringTuning + 1, fret, stringNumber, noteOffset);
+      const isActive = currenFret - 1 === fret;
+
+      this.notes[stringNumber][fret] = this.createNoteForFret(this.currentStringTuning + 1, fret, stringNumber, noteOffset, isActive);
     }
 
     // Draw notes outside fretboard on left and right
@@ -247,7 +276,9 @@ export class FretboardDrawerService implements OnDestroy {
     this.drawNotes();
   }
 
-  private createNoteForFret(baseNote: number, fretNumber: number, string: number, offset: number = 0): NoteElement {
+  private createNoteForFret(
+    baseNote: number, fretNumber: number, string: number, offset: number = 0, isActive: boolean = false
+  ): NoteElement {
     const fret = fretNumber < 0 ? 0 : fretNumber >= this.numberOfFrets ? this.numberOfFrets - 1 : fretNumber;
     const { center } = this.frets[fret];
     const y = this.frets[fret].findY(string) + 1; // 1px == half of string height
@@ -277,6 +308,7 @@ export class FretboardDrawerService implements OnDestroy {
       display: showNote,
       isFundamental: false,
       inScale: false,
+      isActive: isActive,
       bgColor,
       color,
     });
@@ -307,31 +339,41 @@ export class FretboardDrawerService implements OnDestroy {
     this.drawNut();
   }
 
-  // public drawScale(scalePattern: Array<number>, fromFret: number = 3, span: number = 8) {
-  //   let pos = fromFret;
-  //   let string = this.numberOfStrings - 1;
-  //   let step = 0;
+  public drawScale(event: SyntheticEvent, span: number = 8) {
+    const { name, fret, string } = event.target;
+      console.log(name, fret, string);
+    const scalePattern = [2, 2, 1, 2, 2, 2, 1];
+    let pos = fret;
+    let stringNumber = string;
+    let step = 0;
 
-  //   do {
-  //     if (step === 0) {
-  //       this.frets[pos].mark(string, this.theme.fundamental);
-  //     } else {
-  //       this.frets[pos].mark(string);
-  //     }
+    do {
+      if (step === 0) {
+        this.notes[stringNumber][pos].isFundamental = true;
+        this.notes[stringNumber][pos].inScale = true;
+        this.notes[stringNumber][pos].bgColor = this.theme.fundamental;
+        this.notes[stringNumber][pos].color = '#fff';
+      } else {
+        this.notes[stringNumber][pos].inScale = true;
+        this.notes[stringNumber][pos].bgColor = '#fff';
+        this.notes[stringNumber][pos].color = '#fff';
+      }
 
-  //     pos += scalePattern[step];
-  //     step++;
+      pos += scalePattern[step];
+      step++;
 
-  //     if (step >= scalePattern.length) {
-  //       step = 0;
-  //     }
+      if (step >= scalePattern.length) {
+        step = 0;
+      }
 
-  //     if (pos > fromFret + 3) {
-  //       pos -= (string === 2 ? 4 : 5);
-  //       string--;
-  //     }
-  //   } while (string >= 0 && --span > 0);
-  // }
+      if (pos > fret + 4) {
+        pos -= (string === 2 ? 4 : 5);
+        stringNumber--;
+      }
+    } while (stringNumber >= 0 && --span > 0);
+
+    this.redrawNotes();
+  }
 
   roundRect(ctx: CanvasRenderingContext2D, options) {
     const { x, y, width, height, radius = [4, 4, 4, 4], color, fill = true, stroke = false } = options;
@@ -467,28 +509,10 @@ export class FretboardDrawerService implements OnDestroy {
     this.currentScale = sequence;
   }
 
-  private getCurrentTuning(): Observable<Array<number>> {
+  public getCurrentTuning(): Observable<Array<number>> {
     return this.tuning$.asObservable();
   }
 }
-
-export interface ColorPalette {
-  neck?: string;
-  dot?: string;
-  fret?: string;
-  string?: string;
-  fundamental?: string;
-  scale?: string;
-}
-
-const defaultTheme: ColorPalette = {
-  neck: '#221709',
-  dot: '#808080',
-  fret: '#e2c196',
-  string: '#fcf8f3',
-  fundamental: '#87deb8',
-  scale: '#87adde'
-};
 
 export const scaleSequences = {
   major: [2, 2, 1, 2, 2, 2, 1],
