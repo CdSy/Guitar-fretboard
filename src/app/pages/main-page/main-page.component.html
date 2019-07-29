@@ -29,7 +29,6 @@
         [(ngModel)]="numberOfFrets"
         (input)="onChangeFret($event)"
       />
-      <mat-error>Incorrect use 1-24</mat-error>
     </mat-form-field>
   </div>
 
@@ -68,6 +67,17 @@
     >
       <mat-icon>palette</mat-icon>
     </button>
+  </div>
+
+  <div class="form-field">
+    <mat-form-field style="width: 100px;">
+      <mat-label>Generate gamma</mat-label>
+      <mat-select [(ngModel)]="scaleSequence" (selectionChange)="onChangeScale($event.value)" name="scale">
+        <mat-option *ngFor="let sequence of sequenceOptions" [value]="sequence.value">
+          {{sequence.label}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
 </div>
 

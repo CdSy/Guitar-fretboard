@@ -51,8 +51,18 @@ export class Notes {
     return Notes.value[index];
   }
 
-  findNext(from: number, shift: number): INote {
-    const index = this.findNextIndex(from, shift);
+  findNext(from: any, shift: number): INote {
+    let fromIndex = from;
+
+    if (typeof from === 'string') {
+      fromIndex = Notes.value.findIndex(note => note.name === from);
+    }
+
+    if (fromIndex < 0) {
+      throw new Error('Invalid note name');
+    }
+
+    const index = this.findNextIndex(fromIndex, shift);
 
     return Notes.value[index];
   }

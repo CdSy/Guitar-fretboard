@@ -55,11 +55,14 @@ export class FretboardDrawerService implements OnDestroy {
   // State
   tuning$ = new Subject<Array<number>>();
   tuning: Array<number>;
-  currentScale: Array<number>;
-  scaleFromFret: number;
+  scalePattern: Array<number>;
   showFlatNotes: boolean;
   showSharpNotes: boolean;
   tonic: string;
+  notesInGamma: Array<string> = [];
+  buildFromFret: number;
+  buildFromString: number;
+
 
   // Animate state
   noteOffset: number;
@@ -139,10 +142,11 @@ export class FretboardDrawerService implements OnDestroy {
 
   private subscribeToEvents() {
     this.clickOnElement$ = this.pointerDown$.pipe(
-      switchMap(() => this.pointerUp$.pipe(takeUntil(timer(100))))
+      switchMap(() => this.pointerUp$.pipe(takeUntil(timer(200))))
     );
 
-    this.clickOnElement$.subscribe((event: SyntheticEvent) => this.drawScale(event));
+    this.clickOnElement$
+      .subscribe((event: SyntheticEvent) => this.drawScale(event));
 
     this.longClick$ = this.pointerDown$.pipe(
       switchMap(
@@ -162,6 +166,7 @@ export class FretboardDrawerService implements OnDestroy {
       this.startPointY = y;
       this.currentStringTuning = this.tuning[target.string];
       this.currentString = target.string;
+
       this.moveNotes(event);
     });
 
@@ -284,6 +289,11 @@ export class FretboardDrawerService implements OnDestroy {
     const y = this.frets[fret].findY(string) + 1; // 1px == half of string height
     const note = NOTES.findNext(baseNote, fret);
     const { name, type, bgColor, color } = note;
+    const isFundamental = this.tonic && this.tonic === name;
+    const inScale = this.notesInGamma.includes(name);
+    const backgroundColor = isFundamental ? this.theme.fundamental : inScale ? this.theme.scale : bgColor;
+    const textColor = isFundamental || inScale ? '#fff' : color;
+
     let shift = 0;
 
     if (fretNumber < 0) {
@@ -306,11 +316,11 @@ export class FretboardDrawerService implements OnDestroy {
       name,
       type,
       display: showNote,
-      isFundamental: false,
-      inScale: false,
+      isFundamental: isFundamental,
+      inScale: inScale,
       isActive: isActive,
-      bgColor,
-      color,
+      bgColor: backgroundColor,
+      color: textColor,
     });
 
     return noteElement;
@@ -341,38 +351,21 @@ export class FretboardDrawerService implements OnDestroy {
 
   public drawScale(event: SyntheticEvent, span: number = 8) {
     const { name, fret, string } = event.target;
-      console.log(name, fret, string);
-    const scalePattern = [2, 2, 1, 2, 2, 2, 1];
-    let pos = fret;
-    let stringNumber = string;
-    let step = 0;
 
-    do {
-      if (step === 0) {
-        this.notes[stringNumber][pos].isFundamental = true;
-        this.notes[stringNumber][pos].inScale = true;
-        this.notes[stringNumber][pos].bgColor = this.theme.fundamental;
-        this.notes[stringNumber][pos].color = '#fff';
-      } else {
-        this.notes[stringNumber][pos].inScale = true;
-        this.notes[stringNumber][pos].bgColor = '#fff';
-        this.notes[stringNumber][pos].color = '#fff';
-      }
+    this.tonic = name;
+    this.buildFromFret = fret;
+    this.buildFromString = string;
+    this.notesInGamma = this.scalePattern.reduce((data, stepSize) => {
+      const nextNote = NOTES.findNext(data.prevNote, stepSize);
 
-      pos += scalePattern[step];
-      step++;
+      data.notes.push(nextNote.name);
+      data.prevNote = nextNote.name;
 
-      if (step >= scalePattern.length) {
-        step = 0;
-      }
+      return data;
+    }, {prevNote: this.tonic, notes: [this.tonic]}).notes;
 
-      if (pos > fret + 4) {
-        pos -= (string === 2 ? 4 : 5);
-        stringNumber--;
-      }
-    } while (stringNumber >= 0 && --span > 0);
-
-    this.redrawNotes();
+    this.noteLayer.clear();
+    this.drawNotes();
   }
 
   roundRect(ctx: CanvasRenderingContext2D, options) {
@@ -496,6 +489,8 @@ export class FretboardDrawerService implements OnDestroy {
     this.theme = value;
 
     this.drawFretboard();
+    this.noteLayer.clear();
+    this.drawNotes();
   }
 
   public changeShowNotes(value, type) {
@@ -506,7 +501,7 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   public changeScale(sequence: Array<number>) {
-    this.currentScale = sequence;
+    this.scalePattern = sequence;
   }
 
   public getCurrentTuning(): Observable<Array<number>> {

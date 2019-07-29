@@ -39,6 +39,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
   public numberOfFrets = 24;
   public currentTheme = 'dark';
   public isOpenPalette = false;
+  public scaleSequence;
 
   public stringOptions: Array<SelectOption> = [
     {value: 6, label: '6 strings'},
@@ -53,6 +54,9 @@ export class MainPageComponent implements OnInit, OnDestroy {
     {value: 'light', label: 'Light'},
     {value: 'violet', label: 'Violet'},
   ];
+
+  public sequenceOptions: Array<SelectOption> = Object.keys(scaleSequences)
+    .map((key) => new SelectOption({value: key, label: key[0].toUpperCase() + key.slice(1)}));
 
   public themes = {
     'dark': {
@@ -117,8 +121,6 @@ export class MainPageComponent implements OnInit, OnDestroy {
 
     this.drawer.getCurrentTuning().pipe(takeUntil(this.onDestroy$))
       .subscribe(tuning => this.storage.set('tuning', tuning));
-
-    this.drawer.changeScale(scaleSequences.minor);
   }
 
   ngOnDestroy() {
@@ -129,6 +131,10 @@ export class MainPageComponent implements OnInit, OnDestroy {
   onChangeStrings(value: number) {
     this.drawer.changeStringAmount(value);
     this.storage.set('numberOfStrings', value);
+  }
+
+  onChangeScale(value: string) {
+    this.drawer.changeScale(scaleSequences[value]);
   }
 
   onChangeFret(event: any) {
