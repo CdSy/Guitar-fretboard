@@ -1,4 +1,4 @@
-import { ColorPalette } from './models';
+import { ColorPalette, HandTypes } from './models';
 
 export class Fret {
   public x: number;
@@ -9,6 +9,7 @@ export class Fret {
   private numberOfStrings: number;
   private gapBetweenStrings: number;
   private edgeDistance: number;
+  private handType: number;
   private dot: boolean;
   private theme: ColorPalette;
 
@@ -21,6 +22,7 @@ export class Fret {
     numberOfStrings,
     gapBetweenStrings,
     edgeDistance,
+    handType,
     dot,
     theme
   }) {
@@ -32,19 +34,24 @@ export class Fret {
     this.gapBetweenStrings = gapBetweenStrings;
     this.numberOfStrings = numberOfStrings;
     this.edgeDistance = edgeDistance;
+    this.handType = handType;
     this.dot = dot;
     this.theme = theme;
   }
 
   public draw(index: number): void {
+    const isRightHand = this.handType === HandTypes.R;
+
     // the neck
     this.context.beginPath();
     this.context.fillStyle = this.theme.neck;
     this.context.fillRect(this.x, this.y, this.width, this.height);
 
     // the fret
+    const startFret = isRightHand ? this.x + this.width - 3 : this.x;
+
     this.context.fillStyle = this.theme.fret;
-    this.context.fillRect(this.x + this.width - 3, this.y, 3, this.height);
+    this.context.fillRect(startFret, this.y, 3, this.height);
 
     // the strings
     this.context.fillStyle = this.theme.string;

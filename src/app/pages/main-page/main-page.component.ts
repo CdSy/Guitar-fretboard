@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStr
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { FretboardDrawerService, ColorPalette, scaleSequences } from '../../modules/fretboard-canvas';
+import { FretboardDrawerService, ColorPalette, scaleSequences, HandTypes } from '../../modules/fretboard-canvas';
 import { CustomTheme } from '../../modules/palette/palette.component';
 import { StorageService } from '../../services/storage.service';
 
@@ -38,6 +38,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
   public numberOfStrings = 6;
   public numberOfFrets = 24;
   public currentTheme = 'dark';
+  public handMode = HandTypes.R;
   public isOpenPalette = false;
   public scaleSequence;
 
@@ -95,12 +96,14 @@ export class MainPageComponent implements OnInit, OnDestroy {
     const themeNameFromStorage = this.storage.get('themeName');
     const numberOfStringsFromStorage = this.storage.get('numberOfStrings');
     const numberOfFretsFromStorage = this.storage.get('numberOfFrets');
+    const handModeFromStorage = this.storage.get('handType');
 
     this.numberOfStrings = numberOfStringsFromStorage || this.numberOfStrings;
     this.numberOfFrets = numberOfFretsFromStorage || this.numberOfFrets;
     this.currentTheme = themeNameFromStorage || this.currentTheme;
     this.themes = themesFromStorage ? {...themesFromStorage} : this.themes;
     this.themeOptions = themeOptionsFromStorage ? [...themeOptionsFromStorage] : this.themeOptions;
+    this.handMode = handModeFromStorage || this.handMode;
   }
 
   ngOnInit() {
@@ -116,7 +119,8 @@ export class MainPageComponent implements OnInit, OnDestroy {
       showSharpNotes: this.showSharpNotes,
       numberOfStrings: this.numberOfStrings,
       numberOfFrets: this.numberOfFrets,
-      tuning: tuningFromStorage
+      tuning: tuningFromStorage,
+      handType: this.handMode,
     });
 
     this.drawer.getCurrentTuning().pipe(takeUntil(this.onDestroy$))
@@ -126,6 +130,14 @@ export class MainPageComponent implements OnInit, OnDestroy {
   ngOnDestroy() {
     this.onDestroy$.next();
     this.onDestroy$.complete();
+  }
+
+  onChangeHandType(checked: boolean) {
+    const type = checked ? HandTypes.R : HandTypes.L;
+
+    this.handMode = type;
+    this.storage.set('handType', type);
+    this.drawer.changeHandType(type);
   }
 
   onChangeStrings(value: number) {

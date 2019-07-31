@@ -2,7 +2,7 @@ import { Injectable, OnDestroy } from '@angular/core';
 import { Observable, Subject, fromEvent, timer } from 'rxjs';
 import { filter, repeat, take, takeUntil, switchMap } from 'rxjs/operators';
 import { EventManager, SyntheticEvent } from './event-manager.service';
-import { NoteTypes, ColorPalette } from './models';
+import { NoteTypes, HandTypes, ColorPalette } from './models';
 import { Fret } from './fret';
 import { NoteElement } from './note';
 import { Notes } from './notes';
@@ -20,6 +20,7 @@ export interface InitializeParams {
   showSharpNotes?: boolean;
   numberOfStrings?: number;
   numberOfFrets?: number;
+  handType?: number;
   tuning?: Array<number>;
 }
 
@@ -28,11 +29,8 @@ export class FretboardDrawerService implements OnDestroy {
   frets: Array<Fret>;
   notes: Array<Array<NoteElement>>;
 
-  theme: ColorPalette;
   ratio: number;
   edgeDistance: number;
-  numberOfFrets: number;
-  numberOfStrings: number;
   gapBetweenStrings: number;
   width: number;
   height: number;
@@ -43,6 +41,7 @@ export class FretboardDrawerService implements OnDestroy {
   fretLayer: CanvasLayer;
   noteLayer: CanvasLayer;
 
+  // Event streams
   onDestroy$ = new Subject<void>();
   resize$ = fromEvent(window, 'resize');
   clickOnElement$: Observable<SyntheticEvent>;
@@ -51,6 +50,11 @@ export class FretboardDrawerService implements OnDestroy {
   pointerMove$: Observable<SyntheticEvent>;
   pointerUp$: Observable<SyntheticEvent>;
 
+  // User settings
+  handType: number;
+  numberOfFrets: number;
+  numberOfStrings: number;
+  theme: ColorPalette;
 
   // State
   tuning$ = new Subject<Array<number>>();
@@ -96,20 +100,22 @@ export class FretboardDrawerService implements OnDestroy {
     showSharpNotes = true,
     numberOfStrings = 6,
     numberOfFrets = 24,
+    handType = HandTypes.R,
     tuning = DEFAULT_TUNING,
     theme
   }: InitializeParams) {
     this.edgeDistance = 10;
     this.gapBetweenStrings = 28;
-    this.paddingLeft = 26;
-    this.paddingTop = 20;
-    this.paddingRight = 0;
-    this.paddingBottom = 25;
     this.numberOfFrets = numberOfFrets;
     this.numberOfStrings = numberOfStrings;
+    this.handType = handType;
     this.showFlatNotes = showFlatNotes;
     this.showSharpNotes = showSharpNotes;
     this.tuning = tuning;
+    this.paddingLeft = this.handType === HandTypes.R ? 26 : 0;
+    this.paddingTop = 20;
+    this.paddingRight = this.handType === HandTypes.R ? 0 : 26;
+    this.paddingBottom = 25;
 
     const width = Number(getComputedStyle(fretLayer).getPropertyValue('width').slice(0, -2));
     const height = this.calculateHeight();
@@ -146,6 +152,7 @@ export class FretboardDrawerService implements OnDestroy {
     );
 
     this.clickOnElement$
+      .pipe(filter(_ => Boolean(this.scalePattern)))
       .subscribe((event: SyntheticEvent) => this.drawScale(event));
 
     this.longClick$ = this.pointerDown$.pipe(
@@ -196,15 +203,28 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   private moveNotes(event: SyntheticEvent) {
-    const { x: padding } = this.noteLayer.getRect();
-    const pointerX = event.srcEvent.layerX + this.shiftX - padding; // Cursor position with shift related on note position
+    const { width, pr, pl } = this.noteLayer.getRect();
+    const isRightHand = this.handType === HandTypes.R;
+    const padding = isRightHand ? pl : pr;
+    const pointerX = isRightHand ?
+      event.srcEvent.layerX + this.shiftX - padding :
+      (width - event.srcEvent.layerX) - this.shiftX; // Cursor position with shift related on note position
+
     const stringNumber = this.currentString;
 
-    const startFret = Math.ceil(this.startPointX / this.fretWidth);
+    const startFret = isRightHand ?
+      Math.ceil(this.startPointX / this.fretWidth) :
+      Math.ceil((width - this.startPointX) / this.fretWidth);
+
     const currenFret = Math.ceil(pointerX / this.fretWidth);
+
     const fretDifference = startFret - currenFret; // How many frets passed from start
     const newStringTuning = NOTES.findNextIndex(this.tuning[stringNumber], fretDifference); // Set new start note
-    const noteOffset = pointerX - ((currenFret * this.fretWidth) - (this.fretWidth / 2)); // Offset from X point of center of fret
+
+    const noteOffset = isRightHand ?
+      pointerX - ((currenFret * this.fretWidth) - (this.fretWidth / 2)) :
+      ((currenFret * this.fretWidth) - (this.fretWidth / 2)) - pointerX; // Offset from X point of center of fret
+
     const fretsLength = this.frets.length;
 
     this.noteOffset = noteOffset;
@@ -284,6 +304,7 @@ export class FretboardDrawerService implements OnDestroy {
   private createNoteForFret(
     baseNote: number, fretNumber: number, string: number, offset: number = 0, isActive: boolean = false
   ): NoteElement {
+    const isRightHand = this.handType === HandTypes.R;
     const fret = fretNumber < 0 ? 0 : fretNumber >= this.numberOfFrets ? this.numberOfFrets - 1 : fretNumber;
     const { center } = this.frets[fret];
     const y = this.frets[fret].findY(string) + 1; // 1px == half of string height
@@ -297,11 +318,15 @@ export class FretboardDrawerService implements OnDestroy {
     let shift = 0;
 
     if (fretNumber < 0) {
-      shift = fretNumber * this.fretWidth;
+      shift = isRightHand ? fretNumber * this.fretWidth : Math.abs(fretNumber * this.fretWidth);
     }
 
     if (fretNumber >= this.numberOfFrets) {
       shift = (fretNumber - this.numberOfFrets - 1) * this.fretWidth;
+
+      if (isRightHand) {
+        shift = -shift;
+      }
     }
 
     const showNote = type === NoteTypes.base && this.showFlatNotes ||
@@ -395,25 +420,29 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   private drawNut() {
-    const {x , y, height } = this.noteLayer.getRect();
+    const { x, pl, pr, y, width, height } = this.noteLayer.getRect();
+    const isRightHand = this.handType === HandTypes.R;
+    const radius = isRightHand ? [8, 0 , 0, 8] : [0, 8 , 8, 0];
+    const start = isRightHand ? 0 : width;
 
     this.roundRect(this.noteLayer.context, {
-      x: 0,
+      x: start,
       y: y,
-      width: x,
+      width: isRightHand ? pl : pr,
       height: height,
-      radius: [8, 0 , 0, 8],
+      radius: radius,
       color: '#565656'
     });
 
     for (let string = 0; string < this.numberOfStrings; string++) {
       const pointY = (this.edgeDistance + this.gapBetweenStrings * string) + y + 1;
       const baseNote = NOTES[this.tuning[string]];
+      const centerX = isRightHand ? x / 2 : width + (pr / 2);
       const { name, type } = baseNote;
 
       const note = new NoteElement({
         context: this.noteLayer.context,
-        x: x / 2,
+        x: centerX,
         y: pointY,
         fret: 0,
         string: string,
@@ -431,11 +460,13 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   private drawFretboard() {
-    const {x , y, width, height } = this.fretLayer.getRect();
-    this.frets = new Array(this.numberOfFrets);
-    let from = width;
+    const { x , y, width, height } = this.fretLayer.getRect();
+    const isRightHand = this.handType === HandTypes.R;
     const originWidth = x + width;
     const fretWidth = width / this.numberOfFrets;
+    let from = isRightHand ? width : fretWidth;
+
+    this.frets = new Array(this.numberOfFrets);
     this.fretWidth = fretWidth;
 
     for (let i = 0; i < this.numberOfFrets; i++) {
@@ -450,11 +481,16 @@ export class FretboardDrawerService implements OnDestroy {
         numberOfStrings: this.numberOfStrings,
         gapBetweenStrings: this.gapBetweenStrings,
         edgeDistance: this.edgeDistance,
+        handType: this.handType,
         dot: dot,
         theme: this.theme
       });
 
-      from -= fretWidth;
+      if (isRightHand) {
+        from -= fretWidth;
+      } else {
+        from += fretWidth;
+      }
     }
 
     this.frets.forEach((entry, index) => entry.draw(index));
@@ -502,6 +538,14 @@ export class FretboardDrawerService implements OnDestroy {
 
   public changeScale(sequence: Array<number>) {
     this.scalePattern = sequence;
+  }
+
+  public changeHandType(value: number) {
+    this.handType = value;
+
+    this.fretLayer.invertAxis();
+    this.noteLayer.invertAxis();
+    this.redraw();
   }
 
   public getCurrentTuning(): Observable<Array<number>> {

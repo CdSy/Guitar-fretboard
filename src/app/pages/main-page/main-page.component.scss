@@ -38,3 +38,22 @@
 .field-label {
   display: block;
 }
+
+.handmode-switcher {
+  display: flex;
+  align-items: center;
+  font-size: 18px;
+
+  mat-slide-toggle {
+    margin: 0 25px;
+  }
+
+  .label {
+    opacity: 0.5;
+    transition: opacity 0.2s linear;
+
+    &.active {
+      opacity: 1;
+    }
+  }
+}

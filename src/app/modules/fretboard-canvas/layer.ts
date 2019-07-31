@@ -24,17 +24,31 @@ export class CanvasLayer {
 
   getRect(): ILayerRect {
     const x = this.paddingLeft;
+    const x2 = this.width - this.paddingRight;
     const y = this.paddingTop;
+    const y2 = this.height - this.paddingBottom;
+    const pl = this.paddingLeft;
+    const pt = this.paddingTop;
+    const pr = this.paddingRight;
+    const pb = this.paddingBottom;
     const width = this.width - this.paddingLeft - this.paddingRight;
     const height = this.height - this.paddingTop - this.paddingBottom;
 
-    return {x, y, width, height};
+    return {x, y, x2, y2, pl, pt, pr, pb, width, height};
   }
 
   update() {
     this.width = Number(getComputedStyle(this.canvas.parentElement).getPropertyValue('width').slice(0, -2));
     this.clear();
     this.fixDPI();
+  }
+
+  invertAxis() {
+    const PL = this.paddingLeft;
+    const PR = this.paddingRight;
+
+    this.paddingLeft = PR;
+    this.paddingRight = PL;
   }
 
   clear() {

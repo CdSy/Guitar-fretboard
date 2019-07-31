@@ -3,6 +3,11 @@ export enum NoteTypes {
   sharp
 }
 
+export enum HandTypes {
+  R,
+  L
+}
+
 export interface INote {
   name: string;
   bgColor: string;
@@ -25,6 +30,12 @@ export interface IViewNote extends INote {
 export interface ILayerRect {
   x: number;
   y: number;
+  x2: number;
+  y2: number;
+  pl: number;
+  pt: number;
+  pr: number;
+  pb: number;
   width: number;
   height: number;
 }

@@ -70,6 +70,14 @@
   </div>
 
   <div class="form-field">
+    <div class="handmode-switcher">
+      <div class="label" [ngClass]="{active: handMode === 1}">Lefthanded</div>
+      <mat-slide-toggle [checked]="handMode === 0" (change)="onChangeHandType($event.checked)"></mat-slide-toggle>
+      <div class="label" [ngClass]="{active: handMode === 0}">Righthanded</div>
+    </div>
+  </div>
+
+  <div class="form-field">
     <mat-form-field style="width: 100px;">
       <mat-label>Generate gamma</mat-label>
       <mat-select [(ngModel)]="scaleSequence" (selectionChange)="onChangeScale($event.value)" name="scale">

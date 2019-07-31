@@ -59,7 +59,7 @@ export class Notes {
     }
 
     if (fromIndex < 0) {
-      throw new Error('Invalid note name');
+      fromIndex = this.findNextIndex(0, fromIndex);
     }
 
     const index = this.findNextIndex(fromIndex, shift);
