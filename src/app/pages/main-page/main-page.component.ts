@@ -2,7 +2,7 @@ import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStr
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
-import { FretboardDrawerService, ColorPalette, scaleSequences, HandTypes } from '../../modules/fretboard-canvas';
+import { FretboardDrawerService, ColorPalette, SCALES, HandTypes } from '../../modules/fretboard-canvas';
 import { CustomTheme } from '../../modules/palette/palette.component';
 import { StorageService } from '../../services/storage.service';
 
@@ -56,7 +56,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
     {value: 'violet', label: 'Violet'},
   ];
 
-  public sequenceOptions: Array<SelectOption> = Object.keys(scaleSequences)
+  public sequenceOptions: Array<SelectOption> = Object.keys(SCALES)
     .map((key) => new SelectOption({value: key, label: key[0].toUpperCase() + key.slice(1)}));
 
   public themes = {
@@ -146,7 +146,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
   }
 
   onChangeScale(value: string) {
-    this.drawer.changeScale(scaleSequences[value]);
+    this.drawer.changeScale(SCALES[value]);
   }
 
   onChangeFret(event: any) {

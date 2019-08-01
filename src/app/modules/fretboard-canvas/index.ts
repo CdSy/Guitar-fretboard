@@ -6,3 +6,4 @@ export * from './notes';
 export * from './layer';
 export * from './fretboard-drawer.service';
 export * from './event-manager.service';
+export * from './scales';
