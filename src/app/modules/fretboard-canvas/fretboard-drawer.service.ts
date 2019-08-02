@@ -21,6 +21,7 @@ export interface InitializeParams {
   numberOfStrings?: number;
   numberOfFrets?: number;
   handType?: number;
+  scaleMode?: number;
   tuning?: Array<number>;
 }
 
@@ -60,6 +61,7 @@ export class FretboardDrawerService implements OnDestroy {
   tuning$ = new Subject<Array<number>>();
   tuning: Array<number>;
   scalePattern: Array<number>;
+  scaleMode: number;
   showFlatNotes: boolean;
   showSharpNotes: boolean;
   tonic: string;
@@ -102,6 +104,7 @@ export class FretboardDrawerService implements OnDestroy {
     numberOfFrets = 24,
     handType = HandTypes.R,
     tuning = DEFAULT_TUNING,
+    scaleMode = 0,
     theme
   }: InitializeParams) {
     this.edgeDistance = 10;
@@ -111,6 +114,7 @@ export class FretboardDrawerService implements OnDestroy {
     this.handType = handType;
     this.showFlatNotes = showFlatNotes;
     this.showSharpNotes = showSharpNotes;
+    this.scaleMode = scaleMode;
     this.tuning = tuning;
     this.paddingLeft = this.handType === HandTypes.R ? 26 : 0;
     this.paddingTop = 20;
@@ -133,10 +137,7 @@ export class FretboardDrawerService implements OnDestroy {
     this.theme = {...this.theme, ...theme};
 
     this.pointerDown$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointerdown')
-      .pipe(
-        takeUntil(this.onDestroy$),
-        filter((event: SyntheticEvent) => event.target !== undefined)
-      );
+      .pipe(takeUntil(this.onDestroy$));
 
     this.pointerMove$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointermove');
     this.pointerUp$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointerup');
@@ -156,6 +157,7 @@ export class FretboardDrawerService implements OnDestroy {
       .subscribe((event: SyntheticEvent) => this.drawScale(event));
 
     this.longClick$ = this.pointerDown$.pipe(
+      filter((event: SyntheticEvent) => event.target !== undefined),
       switchMap(
         () => timer(300).pipe(takeUntil(this.pointerUp$)),
         (outerValue) => outerValue
@@ -310,8 +312,19 @@ export class FretboardDrawerService implements OnDestroy {
     const y = this.frets[fret].findY(string) + 1; // 1px == half of string height
     const note = NOTES.findNext(baseNote, fret);
     const { name, type, bgColor, color } = note;
-    const isFundamental = this.tonic && this.tonic === name;
-    const inScale = this.notesInGamma.includes(name);
+    const currentFret = string < 2 ? fretNumber + 1 : fretNumber;
+    let isFundamental = false;
+    let inScale = false;
+
+    if (
+      this.scaleMode === 0 ||
+      currentFret >= this.buildFromFret &&
+      currentFret - this.buildFromFret <= this.scaleMode
+    ) {
+      isFundamental = this.tonic && this.tonic === name;
+      inScale = this.notesInGamma.includes(name);
+    }
+
     const backgroundColor = isFundamental ? this.theme.fundamental : inScale ? this.theme.scale : bgColor;
     const textColor = isFundamental || inScale ? '#fff' : color;
 
@@ -329,8 +342,8 @@ export class FretboardDrawerService implements OnDestroy {
       }
     }
 
-    const showNote = type === NoteTypes.base && this.showFlatNotes ||
-      type === NoteTypes.sharp && this.showSharpNotes;
+    const showNote = !this.tonic && (type === NoteTypes.base && this.showFlatNotes ||
+      type === NoteTypes.sharp && this.showSharpNotes);
 
     const noteElement = new NoteElement({
       context: this.noteLayer.context,
@@ -375,6 +388,15 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   public drawScale(event: SyntheticEvent, span: number = 8) {
+    if (!event.target && this.tonic) {
+      this.tonic = null;
+      this.notesInGamma = [];
+
+      this.noteLayer.clear();
+      this.drawNotes();
+      return;
+    }
+
     const { name, fret, string } = event.target;
 
     this.tonic = name;
@@ -538,6 +560,20 @@ export class FretboardDrawerService implements OnDestroy {
 
   public changeScale(sequence: Array<number>) {
     this.scalePattern = sequence;
+
+    if (this.tonic) {
+      this.noteLayer.clear();
+      this.drawNotes();
+    }
+  }
+
+  public changeScaleMode(mode: number) {
+    this.scaleMode = mode;
+
+    if (this.tonic) {
+      this.noteLayer.clear();
+      this.drawNotes();
+    }
   }
 
   public changeHandType(value: number) {
@@ -552,17 +588,3 @@ export class FretboardDrawerService implements OnDestroy {
     return this.tuning$.asObservable();
   }
 }
-
-export const scaleSequences = {
-  major: [2, 2, 1, 2, 2, 2, 1],
-  jonian: [2, 2, 1, 2, 2, 2, 1],
-  dorian: [2, 1, 2, 2, 2, 1, 2],
-  phrygian: [1, 2, 2, 2, 1, 2, 2],
-  lydian: [2, 2, 2, 1, 2, 2, 1],
-  mixolydian: [2, 2, 1, 2, 2, 1, 2],
-  eolian: [2, 1, 2, 2, 1, 2, 2],
-  locrian: [1, 2, 2, 1, 2, 2, 2],
-  hexatonic: [2, 2, 2, 2, 2, 2],
-  minor: [2, 1, 2, 2, 1, 2, 2],
-  jazz_minor: [2, 1, 2, 2, 2, 2, 1],
-};

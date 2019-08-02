@@ -6,7 +6,7 @@ import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
-
+import { MatRadioModule } from '@angular/material/radio';
 
 @NgModule({
   imports: [
@@ -17,6 +17,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     MatInputModule,
     MatTooltipModule,
     MatSlideToggleModule,
+    MatRadioModule,
   ],
   exports: [
     MatButtonModule,
@@ -26,6 +27,7 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
     MatInputModule,
     MatTooltipModule,
     MatSlideToggleModule,
+    MatRadioModule,
   ],
 })
 export class MaterialModule { }

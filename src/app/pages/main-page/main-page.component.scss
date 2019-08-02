@@ -27,6 +27,7 @@
   display: flex;
   align-content: center;
   align-items: flex-start;
+  flex-wrap: wrap;
   padding: 25px 20px;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
 }
@@ -56,4 +57,8 @@
       opacity: 1;
     }
   }
+}
+
+.mat-radio-button {
+  margin-right: 16px;
 }

@@ -40,7 +40,15 @@ export class MainPageComponent implements OnInit, OnDestroy {
   public currentTheme = 'dark';
   public handMode = HandTypes.R;
   public isOpenPalette = false;
-  public scaleSequence;
+  public scaleSequence: string;
+  public scaleMode = 0;
+
+  public scaleModes: Array<any> = [
+    {value: 0, name: 'Full'},
+    {value: 4, name: 'Vertical'},
+    {value: 5, name: 'Shifted'},
+    {value: 6, name: 'Horizontal'},
+  ];
 
   public stringOptions: Array<SelectOption> = [
     {value: 6, label: '6 strings'},
@@ -121,6 +129,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
       numberOfFrets: this.numberOfFrets,
       tuning: tuningFromStorage,
       handType: this.handMode,
+      scaleMode: this.scaleMode
     });
 
     this.drawer.getCurrentTuning().pipe(takeUntil(this.onDestroy$))
@@ -172,6 +181,10 @@ export class MainPageComponent implements OnInit, OnDestroy {
 
   onChangeColor(newTheme: ColorPalette) {
     this.drawer.changeTheme(newTheme);
+  }
+
+  onChangeScaleMode() {
+    this.drawer.changeScaleMode(this.scaleMode);
   }
 
   onCancel() {

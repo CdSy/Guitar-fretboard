@@ -78,14 +78,22 @@
   </div>
 
   <div class="form-field">
-    <mat-form-field style="width: 100px;">
-      <mat-label>Generate gamma</mat-label>
+    <mat-form-field style="width: 200px;">
+      <mat-label>Scales</mat-label>
       <mat-select [(ngModel)]="scaleSequence" (selectionChange)="onChangeScale($event.value)" name="scale">
         <mat-option *ngFor="let sequence of sequenceOptions" [value]="sequence.value">
           {{sequence.label}}
         </mat-option>
       </mat-select>
     </mat-form-field>
+  </div>
+
+  <div class="form-field">
+    <mat-radio-group [(ngModel)]="scaleMode" (change)="onChangeScaleMode()" aria-label="Select pattern">
+      <mat-radio-button  *ngFor="let mode of scaleModes" [value]="mode.value">
+        {{mode.name}}
+      </mat-radio-button>
+    </mat-radio-group>
   </div>
 </div>
 
