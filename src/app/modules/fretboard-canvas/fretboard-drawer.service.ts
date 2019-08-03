@@ -109,8 +109,8 @@ export class FretboardDrawerService implements OnDestroy {
   }: InitializeParams) {
     this.edgeDistance = 10;
     this.gapBetweenStrings = 28;
-    this.numberOfFrets = numberOfFrets;
-    this.numberOfStrings = numberOfStrings;
+    this.numberOfFrets = Number(numberOfFrets);
+    this.numberOfStrings = Number(numberOfStrings);
     this.handType = handType;
     this.showFlatNotes = showFlatNotes;
     this.showSharpNotes = showSharpNotes;
@@ -215,7 +215,7 @@ export class FretboardDrawerService implements OnDestroy {
     const stringNumber = this.currentString;
 
     const startFret = isRightHand ?
-      Math.ceil(this.startPointX / this.fretWidth) :
+      Math.ceil((this.startPointX - padding) / this.fretWidth) :
       Math.ceil((width - this.startPointX) / this.fretWidth);
 
     const currenFret = Math.ceil(pointerX / this.fretWidth);
@@ -241,7 +241,7 @@ export class FretboardDrawerService implements OnDestroy {
 
     // Draw notes outside fretboard on left and right
     this.notes[stringNumber].push(this.createNoteForFret(this.currentStringTuning, -1, stringNumber, noteOffset));
-    this.notes[stringNumber].push(this.createNoteForFret(this.currentStringTuning, this.numberOfFrets, stringNumber, noteOffset));
+    this.notes[stringNumber].push(this.createNoteForFret(this.currentStringTuning, this.numberOfFrets + 1, stringNumber, noteOffset));
 
     this.redrawNotes();
   }
@@ -274,7 +274,7 @@ export class FretboardDrawerService implements OnDestroy {
 
         // Draw notes outside fretboard on left and right
         this.notes[string].push(this.createNoteForFret(tuning, -1, string, offset));
-        this.notes[string].push(this.createNoteForFret(tuning, this.numberOfFrets, string, offset));
+        this.notes[string].push(this.createNoteForFret(tuning, this.numberOfFrets + 1, string, offset));
 
         this.redrawNotes();
 
@@ -307,10 +307,10 @@ export class FretboardDrawerService implements OnDestroy {
     baseNote: number, fretNumber: number, string: number, offset: number = 0, isActive: boolean = false
   ): NoteElement {
     const isRightHand = this.handType === HandTypes.R;
-    const fret = fretNumber < 0 ? 0 : fretNumber >= this.numberOfFrets ? this.numberOfFrets - 1 : fretNumber;
+    const fret = Math.max(0, Math.min(this.numberOfFrets - 1, fretNumber));
     const { center } = this.frets[fret];
     const y = this.frets[fret].findY(string) + 1; // 1px == half of string height
-    const note = NOTES.findNext(baseNote, fret);
+    const note = NOTES.findNext(baseNote, fretNumber < 0 ? 0 : fretNumber);
     const { name, type, bgColor, color } = note;
     const currentFret = string < 2 ? fretNumber + 1 : fretNumber;
     let isFundamental = false;
@@ -335,9 +335,9 @@ export class FretboardDrawerService implements OnDestroy {
     }
 
     if (fretNumber >= this.numberOfFrets) {
-      shift = (fretNumber - this.numberOfFrets - 1) * this.fretWidth;
+      shift = (fretNumber - this.numberOfFrets) * this.fretWidth;
 
-      if (isRightHand) {
+      if (!isRightHand) {
         shift = -shift;
       }
     }
@@ -531,7 +531,7 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   public changeStringAmount(value: number) {
-    this.numberOfStrings = value;
+    this.numberOfStrings = Number(value);
 
     // Recalculate height. const 12 is gaps on the sides of the neck (10px) + height of last string (2px)
     const height = this.calculateHeight();
@@ -543,7 +543,7 @@ export class FretboardDrawerService implements OnDestroy {
   }
 
   public changeFret(value: number) {
-    this.numberOfFrets = value;
+    this.numberOfFrets = Number(value);
     this.redraw();
   }
 
