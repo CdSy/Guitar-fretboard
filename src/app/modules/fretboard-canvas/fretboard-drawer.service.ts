@@ -397,6 +397,10 @@ export class FretboardDrawerService implements OnDestroy {
       return;
     }
 
+    if (!event.target) {
+      return;
+    }
+
     const { name, fret, string } = event.target;
 
     this.tonic = name;
