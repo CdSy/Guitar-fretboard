@@ -7,6 +7,23 @@ body {
   background-color: #ddd;
 }
 
+// Override material theme START
+.mat-slider-track-background {
+  background-color: rgba(0, 0, 0, 0.2);
+}
+
+.cdk-focused .mat-slider-track-background,
+.mat-slider:hover .mat-slider-track-background {
+  background-color: rgba(0, 0, 0, 0.15);
+}
+
+.mat-snack-bar-container {
+  min-width: 180px !important;
+  color: #efefef;
+  background: #c5962b;
+}
+// Override material theme END
+
 .form-field {
   padding: 0 15px;
 }

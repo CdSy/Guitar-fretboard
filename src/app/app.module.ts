@@ -7,7 +7,7 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MainPageComponent } from './pages/main-page/main-page.component';
-import { FretboardSettingsComponent } from './pages/main-page/components/fretboard-settings.component';
+import { FretboardSettingsComponent } from './pages/main-page/components/settings/fretboard-settings.component';
 import { MaterialModule, FretboardCanvasModule, SideMenuModule, PaletteModule } from './modules';
 import { StorageService } from './services/storage.service';
 import { OutZoneEventManager } from './services/out-zone-event-manager.service';

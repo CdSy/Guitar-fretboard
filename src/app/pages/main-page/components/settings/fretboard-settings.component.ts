@@ -1,6 +1,6 @@
 import { Component, Input, OnInit } from '@angular/core';
-import { FretboardDrawerService, HandTypes } from '../../../modules/fretboard-canvas';
-import { StorageService } from '../../../services/storage.service';
+import { FretboardDrawerService, HandTypes } from '../../../../modules/fretboard-canvas';
+import { StorageService } from '../../../../services/storage.service';
 
 @Component({
   selector: 'app-fretboard-settings',

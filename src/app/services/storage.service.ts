@@ -1,13 +1,34 @@
 
-import { Injectable } from '@angular/core';
+import { Injectable, OnDestroy } from '@angular/core';
+import { Subject } from 'rxjs';
+import { takeUntil, debounceTime } from 'rxjs/operators';
+import { MatSnackBar } from '@angular/material/snack-bar';
 
 @Injectable()
-export class StorageService {
+export class StorageService implements OnDestroy {
+  private onDestroy$ = new Subject<void>();
+  private saved$ = new Subject<string>();
   private storage: any;
   private STORAGE_APP_PREFIX = 'fretboardapp';
 
-  constructor() {
+  constructor(private snackBar: MatSnackBar) {
     this.storage = localStorage;
+
+    this.saved$.pipe(
+      takeUntil(this.onDestroy$),
+      debounceTime(2000)
+    ).subscribe((message: string) => {
+      this.snackBar.open(message, '', {
+        duration: 4000,
+        horizontalPosition: 'center',
+        verticalPosition: 'bottom'
+      });
+    });
+  }
+
+  ngOnDestroy() {
+    this.onDestroy$.next();
+    this.onDestroy$.complete();
   }
 
   public set(key: string, value: any) {
@@ -32,6 +53,8 @@ export class StorageService {
         this.storage.setItem(this.STORAGE_APP_PREFIX + path[0], JSON.stringify(newValue));
         break;
     }
+
+    this.saved$.next(`${path[0]} have been saved`);
   }
 
   public get(key: string, defaultValue?: any) {
