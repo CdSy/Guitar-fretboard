@@ -1,0 +1,15 @@
+<mat-form-field>
+  <mat-label>{{label}}</mat-label>
+  <mat-select [value]="currentValue" (selectionChange)="onChange($event)" name="name" #singleSelect>
+    <mat-option>
+      <ngx-mat-select-search
+        ngModel
+        (ngModelChange)="filterOptions($event)"
+        [placeholderLabel]="placeholder"
+      ></ngx-mat-select-search>
+    </mat-option>
+    <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option.value">
+      {{option.label}}
+    </mat-option>
+  </mat-select>
+</mat-form-field>

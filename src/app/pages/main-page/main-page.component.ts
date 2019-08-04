@@ -6,7 +6,7 @@ import { FretboardDrawerService, ColorPalette, ScaleModes, SCALES, HandTypes } f
 import { CustomTheme } from '../../modules/palette/palette.component';
 import { StorageService } from '../../services/storage.service';
 
-class SelectOption {
+export class SelectOption {
   value: any;
   label: string;
 
@@ -179,6 +179,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
   }
 
   onChangeScale(value: string) {
+    this.scaleSequence = value;
     this.drawer.changeScale(SCALES[value]);
   }
 

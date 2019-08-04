@@ -40,15 +40,23 @@
     </mat-form-field>
   </div>
 
-  <div class="form-field">
-    <mat-form-field style="width: 200px;">
+  <div class="form-field" style="width: 200px;">
+    <!-- <mat-form-field style="width: 200px;">
       <mat-label>Scales</mat-label>
       <mat-select [(ngModel)]="scaleSequence" (selectionChange)="onChangeScale($event.value)" name="scale">
         <mat-option *ngFor="let sequence of sequenceOptions" [value]="sequence.value">
           {{sequence.label}}
         </mat-option>
       </mat-select>
-    </mat-form-field>
+    </mat-form-field> -->
+    <app-search-select
+      [value]="scaleSequence"
+      [options]="sequenceOptions"
+      (selectionChange)="onChangeScale($event.value)"
+      label="Scales"
+      placeholder="Find scale..."
+      name="scale"
+    ></app-search-select>
   </div>
 
   <div class="form-field">
