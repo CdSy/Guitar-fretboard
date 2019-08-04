@@ -1,0 +1,53 @@
+<div class="form-field">
+  <label class="field-label">Strings</label>
+  <div class="range-slider">
+    <span class="range-value">{{numberOfStrings}}</span>
+    <mat-slider (input)="onChangeStrings($event.value)" [value]="numberOfStrings" min="6" max="10"></mat-slider>
+  </div>
+</div>
+
+<div class="form-field">
+  <label class="field-label">Frets</label>
+  <div class="range-slider">
+    <span class="range-value">{{numberOfFrets}}</span>
+    <mat-slider (input)="onChangeFret($event.value)" [value]="numberOfFrets" min="1" max="24"></mat-slider>
+  </div>
+</div>
+
+<div class="form-field">
+  <div class="checkbox-wrapper">
+    <mat-checkbox
+    [(ngModel)]="showFlatNotes"
+    (change)="onChangeShowNotes($event.checked, 'showFlatNotes')"
+    ></mat-checkbox>
+    <label class="field-label">Show flat notes</label>
+  </div>
+</div>
+
+<div class="form-field">
+  <div class="checkbox-wrapper">
+    <mat-checkbox
+    [(ngModel)]="showSharpNotes"
+    (change)="onChangeShowNotes($event.checked, 'showSharpNotes')"
+    ></mat-checkbox>
+    <label class="field-label">Show sharp notes</label>
+  </div>
+</div>
+
+<div class="form-field">
+  <div class="checkbox-wrapper">
+    <mat-checkbox
+    [(ngModel)]="showGhostNotes"
+    (change)="onChangeShowNotes($event.checked, 'showGhostNotes')"
+    ></mat-checkbox>
+    <label class="field-label">Show ghost notes</label>
+  </div>
+</div>
+
+<div class="form-field">
+  <div class="handmode-switcher">
+    <div class="label" [ngClass]="{active: handType === 1}">Lefthanded</div>
+    <mat-slide-toggle [checked]="handType === 0" (change)="onChangeHandType($event.checked)"></mat-slide-toggle>
+    <div class="label" [ngClass]="{active: handType === 0}">Righthanded</div>
+  </div>
+</div>

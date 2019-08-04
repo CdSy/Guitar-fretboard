@@ -1,8 +1,8 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject, fromEvent, timer } from 'rxjs';
+import { Observable, Subject, BehaviorSubject, fromEvent, timer } from 'rxjs';
 import { filter, repeat, take, takeUntil, switchMap } from 'rxjs/operators';
 import { EventManager, SyntheticEvent } from './event-manager.service';
-import { NoteTypes, HandTypes, ColorPalette } from './models';
+import { NoteTypes, HandTypes, ColorPalette, ScaleModes } from './models';
 import { Fret } from './fret';
 import { NoteElement } from './note';
 import { Notes } from './notes';
@@ -18,6 +18,7 @@ export interface InitializeParams {
   theme?: ColorPalette;
   showFlatNotes?: boolean;
   showSharpNotes?: boolean;
+  showGhostNotes?: boolean;
   numberOfStrings?: number;
   numberOfFrets?: number;
   handType?: number;
@@ -33,8 +34,6 @@ export class FretboardDrawerService implements OnDestroy {
   ratio: number;
   edgeDistance: number;
   gapBetweenStrings: number;
-  width: number;
-  height: number;
   paddingLeft: number;
   paddingTop: number;
   paddingRight: number;
@@ -43,6 +42,7 @@ export class FretboardDrawerService implements OnDestroy {
   noteLayer: CanvasLayer;
 
   // Event streams
+  canvasHeight$ = new BehaviorSubject<number>(300);
   onDestroy$ = new Subject<void>();
   resize$ = fromEvent(window, 'resize');
   clickOnElement$: Observable<SyntheticEvent>;
@@ -64,10 +64,12 @@ export class FretboardDrawerService implements OnDestroy {
   scaleMode: number;
   showFlatNotes: boolean;
   showSharpNotes: boolean;
+  showGhostNotes: boolean;
   tonic: string;
   notesInGamma: Array<string> = [];
   buildFromFret: number;
   buildFromString: number;
+  scaleNotesOnStrings: Array<Array<string>>;
 
 
   // Animate state
@@ -86,6 +88,7 @@ export class FretboardDrawerService implements OnDestroy {
     this.ratio = 0.94;
     this.frets = new Array();
     this.notes = new Array();
+    this.scaleNotesOnStrings = new Array();
 
     this.resize$.subscribe(_ => this.redraw());
   }
@@ -100,6 +103,7 @@ export class FretboardDrawerService implements OnDestroy {
     noteLayer,
     showFlatNotes = true,
     showSharpNotes = true,
+    showGhostNotes = false,
     numberOfStrings = 6,
     numberOfFrets = 24,
     handType = HandTypes.R,
@@ -114,6 +118,7 @@ export class FretboardDrawerService implements OnDestroy {
     this.handType = handType;
     this.showFlatNotes = showFlatNotes;
     this.showSharpNotes = showSharpNotes;
+    this.showGhostNotes = showGhostNotes;
     this.scaleMode = scaleMode;
     this.tuning = tuning;
     this.paddingLeft = this.handType === HandTypes.R ? 26 : 0;
@@ -312,21 +317,9 @@ export class FretboardDrawerService implements OnDestroy {
     const y = this.frets[fret].findY(string) + 1; // 1px == half of string height
     const note = NOTES.findNext(baseNote, fretNumber < 0 ? 0 : fretNumber);
     const { name, type, bgColor, color } = note;
-    const currentFret = string < 2 ? fretNumber + 1 : fretNumber;
-    let isFundamental = false;
-    let inScale = false;
-
-    if (
-      this.scaleMode === 0 ||
-      currentFret >= this.buildFromFret &&
-      currentFret - this.buildFromFret <= this.scaleMode
-    ) {
-      isFundamental = this.tonic && this.tonic === name;
-      inScale = this.notesInGamma.includes(name);
-    }
-
-    const backgroundColor = isFundamental ? this.theme.fundamental : inScale ? this.theme.scale : bgColor;
-    const textColor = isFundamental || inScale ? '#fff' : color;
+    const { isRoot, inScale } = this.recognizeNote(fret, string, name);
+    const backgroundColor = isRoot ? this.theme.root : inScale ? this.theme.scale : bgColor;
+    const textColor = isRoot || inScale ? '#fff' : color;
 
     let shift = 0;
 
@@ -354,8 +347,9 @@ export class FretboardDrawerService implements OnDestroy {
       name,
       type,
       display: showNote,
-      isFundamental: isFundamental,
+      isRoot: isRoot,
       inScale: inScale,
+      ghostMode: this.tonic && this.showGhostNotes,
       isActive: isActive,
       bgColor: backgroundColor,
       color: textColor,
@@ -387,7 +381,7 @@ export class FretboardDrawerService implements OnDestroy {
     this.drawNut();
   }
 
-  public drawScale(event: SyntheticEvent, span: number = 8) {
+  public drawScale(event: SyntheticEvent) {
     if (!event.target && this.tonic) {
       this.tonic = null;
       this.notesInGamma = [];
@@ -404,8 +398,15 @@ export class FretboardDrawerService implements OnDestroy {
     const { name, fret, string } = event.target;
 
     this.tonic = name;
-    this.buildFromFret = fret;
+    this.buildFromFret = Number(fret);
     this.buildFromString = string;
+
+    this.generateNotesForScale();
+    this.noteLayer.clear();
+    this.drawNotes();
+  }
+
+  public generateNotesForScale() {
     this.notesInGamma = this.scalePattern.reduce((data, stepSize) => {
       const nextNote = NOTES.findNext(data.prevNote, stepSize);
 
@@ -414,9 +415,6 @@ export class FretboardDrawerService implements OnDestroy {
 
       return data;
     }, {prevNote: this.tonic, notes: [this.tonic]}).notes;
-
-    this.noteLayer.clear();
-    this.drawNotes();
   }
 
   roundRect(ctx: CanvasRenderingContext2D, options) {
@@ -475,7 +473,7 @@ export class FretboardDrawerService implements OnDestroy {
         name,
         type,
         display: true,
-        isFundamental: false,
+        isRoot: false,
         inScale: false,
         bgColor: '#fff',
         color: '#000',
@@ -527,6 +525,8 @@ export class FretboardDrawerService implements OnDestroy {
       (this.paddingTop + this.paddingBottom) +
       (this.gapBetweenStrings * (this.numberOfStrings - 1));
 
+    this.canvasHeight$.next(height);
+
     return height;
   }
 
@@ -566,6 +566,7 @@ export class FretboardDrawerService implements OnDestroy {
     this.scalePattern = sequence;
 
     if (this.tonic) {
+      this.generateNotesForScale();
       this.noteLayer.clear();
       this.drawNotes();
     }
@@ -590,5 +591,87 @@ export class FretboardDrawerService implements OnDestroy {
 
   public getCurrentTuning(): Observable<Array<number>> {
     return this.tuning$.asObservable();
+  }
+
+  public getCanvasHeight(): Observable<number> {
+    return this.canvasHeight$.asObservable();
+  }
+
+  private recognizeNote(fret: number, string: number, noteName: string): {isRoot: boolean, inScale: boolean} {
+    if (!this.tonic) {
+      return { isRoot: false, inScale: false };
+    }
+
+    if (this.scaleMode === ScaleModes.Full) {
+      const isRoot = this.tonic === noteName;
+      const inScale = this.notesInGamma.includes(noteName);
+
+      return { isRoot, inScale };
+    } else if (fret === 0) {
+      this.scaleNotesOnStrings[string] = [];
+    }
+
+    if (this.scaleMode === ScaleModes.Vertical) {
+      return this.calculateVerticalMode(fret, string, noteName);
+    }
+
+    if (this.scaleMode === ScaleModes.Shifted) {
+      return this.calculateShiftedMode(fret, string, noteName);
+    }
+  }
+
+  private calculateVerticalMode(fret: number, string: number, noteName: string): {isRoot: boolean, inScale: boolean} {
+    const range = [this.buildFromFret - 1, this.buildFromFret + 4];
+    const inRange = fret >= range[0] && fret <= range[1];
+    const prevString = Math.max(0, string - 1);
+    const alreadyDrawed = this.scaleNotesOnStrings[prevString].includes(noteName);
+    let isRoot = false;
+    let inScale = false;
+
+    if (!inRange) {
+      return { isRoot, inScale };
+    }
+
+    if (!alreadyDrawed) {
+      isRoot = this.tonic === noteName;
+      inScale = this.notesInGamma.includes(noteName);
+    }
+
+    if (isRoot || inScale) {
+      this.scaleNotesOnStrings[string].push(noteName);
+    }
+
+    return { isRoot, inScale };
+  }
+
+  private calculateShiftedMode(fret: number, string: number, noteName: string): {isRoot: boolean, inScale: boolean} {
+    if (this.scaleNotesOnStrings[string].length === 4) {
+      return { isRoot: false, inScale: false };
+    }
+
+    const from = string < 2 ? this.buildFromFret + 1 : this.buildFromFret;
+    const to = from + 5;
+    const range = [from, to];
+    const inRange = fret >= range[0] && fret <= range[1];
+    const prevString = Math.max(0, string - 1);
+    const alreadyDrawed = this.scaleNotesOnStrings[prevString].includes(noteName);
+    let isRoot = false;
+    let inScale = false;
+
+
+    if (!inRange) {
+      return { isRoot, inScale };
+    }
+
+    if (!alreadyDrawed) {
+      isRoot = this.tonic === noteName;
+      inScale = this.notesInGamma.includes(noteName);
+    }
+
+    if (isRoot || inScale) {
+      this.scaleNotesOnStrings[string].push(noteName);
+    }
+
+    return { isRoot, inScale };
   }
 }

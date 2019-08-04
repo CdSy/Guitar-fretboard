@@ -3,7 +3,7 @@ export const SCALES = {
   'Natural Minor': [2, 1, 2, 2, 1, 2, 2],
   'Harmonic Major': [2, 2, 1, 2, 1, 3, 1],
   'Harmonic Minor': [2, 1, 2, 2, 1, 3, 1],
-  'Melodic Minor (Ascwnding)': [2, 1, 2, 2, 2, 2, 1],
+  'Melodic Minor (Ascending)': [2, 1, 2, 2, 2, 2, 1],
   'Melodic Minor (Descending)': [2, 1, 2, 2, 1, 2, 2],
   'Ionian': [2, 2, 1, 2, 2, 2, 1],
   'Dorian': [2, 1, 2, 2, 2, 1, 2],

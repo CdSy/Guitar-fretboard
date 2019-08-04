@@ -11,9 +11,10 @@ export class NoteElement implements IViewNote {
   name: string;
   type: number;
   display: boolean;
-  isFundamental: boolean;
+  isRoot: boolean;
   inScale: boolean;
   isActive?: boolean;
+  ghostMode?: boolean;
   bgColor: string;
   color: string;
 
@@ -26,9 +27,10 @@ export class NoteElement implements IViewNote {
     name,
     type,
     display,
-    isFundamental,
+    isRoot,
     inScale,
     isActive = false,
+    ghostMode = false,
     bgColor,
     color,
   }) {
@@ -42,33 +44,37 @@ export class NoteElement implements IViewNote {
     this.name = name;
     this.type = type;
     this.display = display;
-    this.isFundamental = isFundamental;
+    this.isRoot = isRoot;
     this.inScale = inScale;
     this.isActive = isActive;
+    this.ghostMode = ghostMode;
     this.bgColor = bgColor;
     this.color = color;
   }
 
   draw() {
-    if (this.isFundamental || this.inScale || this.display) {
-      this.context.font = `${this.fontSize}px Helvetica`;
-      this.context.textAlign = 'center';
-      this.context.textBaseline = 'middle';
-
-      this.context.beginPath();
-      this.context.fillStyle = this.bgColor;
-      this.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
-      this.context.fill();
-
-
-      // if (this.isFundamental) {
-      //   this.context.strokeStyle = '#b33027';
-      //   this.context.lineWidth = 2;
-      //   this.context.stroke();
-      // }
-
-      this.context.fillStyle = this.color;
-      this.context.fillText(this.name, this.x, this.y);
+    if (this.isRoot || this.inScale || this.display) {
+      this.drawCircle();
+      this.drawText();
     }
+
+    if (this.ghostMode && !this.isRoot && !this.inScale) {
+      this.drawText('rgba(162, 162, 162, 0.5)', 14);
+    }
+  }
+
+  drawCircle() {
+    this.context.beginPath();
+    this.context.fillStyle = this.bgColor;
+    this.context.arc(this.x, this.y, this.radius, 0, 2 * Math.PI);
+    this.context.fill();
+  }
+
+  drawText(color?: string, fontSize?: number) {
+    this.context.font = `${fontSize || this.fontSize}px Helvetica`;
+    this.context.textAlign = 'center';
+    this.context.textBaseline = 'middle';
+    this.context.fillStyle = color || this.color;
+    this.context.fillText(this.name, this.x, this.y);
   }
 }

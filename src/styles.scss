@@ -4,4 +4,22 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  background-color: #ddd;
+}
+
+.form-field {
+  padding: 0 15px;
+}
+
+.field-label {
+  display: block;
+  color: rgba(0,0,0,.54);
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 1.125;
+  font-family: Roboto,"Helvetica Neue",sans-serif;
+}
+
+.flex-align-center {
+  align-items: center;
 }

@@ -8,6 +8,12 @@ export enum HandTypes {
   L
 }
 
+export enum ScaleModes {
+  Full,
+  Vertical,
+  Shifted
+}
+
 export interface INote {
   name: string;
   bgColor: string;
@@ -22,9 +28,10 @@ export interface IViewNote extends INote {
   radius: number;
   fret: number;
   string: number;
-  isFundamental: boolean;
+  isRoot: boolean;
   inScale: boolean;
   isActive?: boolean;
+  ghostMode?: boolean;
 }
 
 export interface ILayerRect {
@@ -45,6 +52,6 @@ export interface ColorPalette {
   dot?: string;
   fret?: string;
   string?: string;
-  fundamental?: string;
+  root?: string;
   scale?: string;
 }

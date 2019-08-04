@@ -1,0 +1,45 @@
+.range-slider {
+  display: flex;
+  align-items: center;
+
+  .mat-slider-horizontal {
+    flex: 1 1 auto;
+  }
+
+  .range-value {
+    width: 20px;
+    display: block;
+    font-size: 14px;
+  }
+}
+
+.checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  padding: 0.4rem 0;
+
+  .field-label {
+    margin-left: 10px;
+    margin-top: 5px;
+  }
+}
+
+.handmode-switcher {
+  display: flex;
+  align-items: center;
+  padding: 1rem 0;
+  font-size: 12px;
+
+  mat-slide-toggle {
+    margin: 0 15px;
+  }
+
+  .label {
+    opacity: 0.5;
+    transition: opacity 0.2s linear;
+
+    &.active {
+      opacity: 1;
+    }
+  }
+}

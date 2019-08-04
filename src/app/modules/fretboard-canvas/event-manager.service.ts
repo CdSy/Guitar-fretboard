@@ -49,7 +49,7 @@ export class EventManager {
 
   registerElements(elements: Array<any>) {
     const registeredElements = elements.reduce((notes, string) => {
-      notes.push(...string.filter(note => note.isFundamental || note.inScale || note.display));
+      notes.push(...string.filter(note => note.isRoot || note.inScale || note.display));
       return notes;
     }, []);
 

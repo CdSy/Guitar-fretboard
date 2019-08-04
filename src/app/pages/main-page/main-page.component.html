@@ -1,5 +1,5 @@
 <app-palette
-  [theme]="themes[currentTheme]"
+  [theme]="themes[themeName]"
   [(active)]="isOpenPalette"
   (changeColor)="onChangeColor($event)"
   (apply)="createCustomTheme($event)"
@@ -7,74 +7,37 @@
   >
 </app-palette>
 
-<div class="controls">
-  <mat-form-field style="width: 100px;">
-    <mat-label>Strings</mat-label>
-    <mat-select [(ngModel)]="numberOfStrings" (selectionChange)="onChangeStrings($event.value)" name="strings">
-      <mat-option *ngFor="let string of stringOptions" [value]="string.value">
-        {{string.label}}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+<app-side-menu #sideMenu side="left">
+  <app-fretboard-settings [settings]="settings"></app-fretboard-settings>
+</app-side-menu>
 
+<div class="section flex-align-center">
   <div class="form-field">
-    <mat-form-field class="text-field" style="width: 55px;">
-      <mat-label>Frets</mat-label>
-      <input
-        matInput
-        type="number"
-        maxlength="2"
-        min="1"
-        max="24"
-        [(ngModel)]="numberOfFrets"
-        (input)="onChangeFret($event)"
-      />
-    </mat-form-field>
+    <button mat-mini-fab isRoundButton="true" matTooltip="Settings" (click)="sideMenu.toggle();">
+      <mat-icon>settings</mat-icon>
+    </button>
   </div>
 
   <div class="form-field">
-    <label class="field-label">Show flat notes</label>
-    <mat-checkbox
-      [(ngModel)]="showFlatNotes"
-      (change)="onChangeShowNotes($event.checked, 'showFlatNotes')"
-    ></mat-checkbox>
-  </div>
-
-  <div class="form-field">
-    <label class="field-label">Show sharp notes</label>
-    <mat-checkbox
-      [(ngModel)]="showSharpNotes"
-      (change)="onChangeShowNotes($event.checked, 'showSharpNotes')"
-    ></mat-checkbox>
-  </div>
-
-  <div class="form-field">
-    <mat-form-field style="width: 100px;">
-      <mat-label>Theme</mat-label>
-      <mat-select [(ngModel)]="currentTheme" (selectionChange)="onChangeTheme($event.value)" name="theme">
-        <mat-option *ngFor="let theme of themeOptions" [value]="theme.value">
-          {{theme.label}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
     <button
       (click)="openPalette()"
       isRoundButton="true"
       matTooltip="Create new theme"
       mat-mini-fab
-      style="margin-left: 15px;"
     >
       <mat-icon>palette</mat-icon>
     </button>
   </div>
 
   <div class="form-field">
-    <div class="handmode-switcher">
-      <div class="label" [ngClass]="{active: handMode === 1}">Lefthanded</div>
-      <mat-slide-toggle [checked]="handMode === 0" (change)="onChangeHandType($event.checked)"></mat-slide-toggle>
-      <div class="label" [ngClass]="{active: handMode === 0}">Righthanded</div>
-    </div>
+    <mat-form-field style="width: 100px;">
+      <mat-label>Theme</mat-label>
+      <mat-select [(ngModel)]="themeName" (selectionChange)="onChangeTheme($event.value)" name="theme">
+        <mat-option *ngFor="let theme of themeOptions" [value]="theme.value">
+          {{theme.label}}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
   </div>
 
   <div class="form-field">
@@ -97,8 +60,8 @@
   </div>
 </div>
 
-<div class="content">
-  <div class="canvas-wrapper">
+<div class="fretboard">
+  <div class="canvas-wrapper" [style.height.px]="canvasHeight$ | async">
     <canvas #fretLayer class="canvas"></canvas>
     <canvas #noteLayer class="canvas"></canvas>
   </div>

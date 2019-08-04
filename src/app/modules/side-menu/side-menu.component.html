@@ -1,0 +1,6 @@
+<div class="app-side-menu" [ngClass]="{'visible': isVisible, 'animatable': isAnimatable}">
+  <div class="menu-content" [ngClass]="side" (transitionend)="transitionEnd($event)">
+    <ng-content></ng-content>
+  </div>
+  <div class="overlay" (click)="close()"></div>
+</div>

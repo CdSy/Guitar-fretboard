@@ -7,6 +7,7 @@ import { MatIconModule } from '@angular/material/icon';
 import { MatTooltipModule } from '@angular/material/tooltip';
 import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatRadioModule } from '@angular/material/radio';
+import { MatSliderModule } from '@angular/material/slider';
 
 @NgModule({
   imports: [
@@ -18,6 +19,7 @@ import { MatRadioModule } from '@angular/material/radio';
     MatTooltipModule,
     MatSlideToggleModule,
     MatRadioModule,
+    MatSliderModule,
   ],
   exports: [
     MatButtonModule,
@@ -28,6 +30,7 @@ import { MatRadioModule } from '@angular/material/radio';
     MatTooltipModule,
     MatSlideToggleModule,
     MatRadioModule,
+    MatSliderModule,
   ],
 })
 export class MaterialModule { }
