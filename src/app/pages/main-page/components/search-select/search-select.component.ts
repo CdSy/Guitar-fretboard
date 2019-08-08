@@ -10,8 +10,8 @@ import { SelectOption } from '../../main-page.component';
 })
 export class SearchSelectComponent implements OnInit, AfterViewInit, OnDestroy {
 
-  protected onDestroy = new Subject<void>();
-  protected allOptions: Array<SelectOption>;
+  private onDestroy = new Subject<void>();
+  private allOptions: Array<SelectOption>;
   public currentValue: string;
   public filteredOptions$: ReplaySubject<Array<SelectOption>> = new ReplaySubject<Array<SelectOption>>(1);
 
@@ -62,7 +62,7 @@ export class SearchSelectComponent implements OnInit, AfterViewInit, OnDestroy {
   //     });
   // }
 
-  protected filterOptions(value: string) {
+  public filterOptions(value: string) {
     if (!this.allOptions) {
       return;
     }

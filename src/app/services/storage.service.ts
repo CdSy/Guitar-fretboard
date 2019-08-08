@@ -54,7 +54,7 @@ export class StorageService implements OnDestroy {
         break;
     }
 
-    this.saved$.next(`${path[0]} have been saved`);
+    // this.saved$.next(`${path[0]} have been saved`);
   }
 
   public get(key: string, defaultValue?: any) {

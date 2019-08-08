@@ -14,7 +14,7 @@ export class SideMenuComponent implements OnInit {
     this.isVisible = value;
   }
 
-  @Input() side: 'left' | 'right | top | bottom' = 'left';
+  @Input() side: 'left' | 'right' | 'top' | 'bottom' = 'left';
   @Output() positionChanged = new EventEmitter<void>();
 
   constructor() { }

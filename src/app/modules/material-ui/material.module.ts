@@ -10,6 +10,8 @@ import { MatRadioModule } from '@angular/material/radio';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
 import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
+import { MatStepperModule } from '@angular/material/stepper';
+import { MatDialogModule } from '@angular/material/dialog';
 
 @NgModule({
   imports: [
@@ -24,6 +26,8 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
     MatSliderModule,
     MatSnackBarModule,
     NgxMatSelectSearchModule,
+    MatStepperModule,
+    MatDialogModule,
   ],
   exports: [
     MatButtonModule,
@@ -37,6 +41,8 @@ import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
     MatSliderModule,
     MatSnackBarModule,
     NgxMatSelectSearchModule,
+    MatStepperModule,
+    MatDialogModule,
   ],
 })
 export class MaterialModule { }

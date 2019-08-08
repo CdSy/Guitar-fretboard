@@ -1,0 +1,33 @@
+<div mat-dialog-title align="center">A little introduction 🎸</div>
+<div mat-dialog-content>
+  <mat-horizontal-stepper (selectionChange)="onChangeStep($event)" #stepper>
+    <mat-step>
+      <p class="paragraph">Select scale and then click on the root note to draw scale on the fretboard</p>
+      <img src="/assets/gif/draw-scale.gif" alt="draw-scale-example" width="600" height="158">
+    </mat-step>
+    <mat-step>
+      <p class="paragraph">Click on the free area to reset scale</p>
+      <img src="/assets/gif/drop-scale.gif" alt="draw-scale-example" width="600" height="158">
+    </mat-step>
+    <mat-step>
+      <p class="paragraph">
+        You can change tuning by dragging the note.<br>
+        All settings will be saved automatically and will be available the next time.<br>
+        This application can also work offline <span class="emoji">🧙‍♂️ 🤘</span>
+      </p>
+      <img src="/assets/gif/tuning.gif" alt="draw-scale-example" width="600" height="158">
+    </mat-step>
+  </mat-horizontal-stepper>
+</div>
+<div mat-dialog-actions align="center">
+  <button mat-mini-fab isRoundButton="true" style="margin-right: 10px;" (click)="stepper.previous();">
+    <mat-icon>keyboard_arrow_left</mat-icon>
+  </button>
+  <button *ngIf="!isEnd; else finishButton" mat-mini-fab isRoundButton="true" (click)="stepper.next();">
+    <mat-icon>keyboard_arrow_right</mat-icon>
+  </button>
+
+  <ng-template #finishButton>
+    <button mat-button mat-dialog-close>Enjoy!</button>
+  </ng-template>
+</div>

@@ -1,7 +1,8 @@
 import { Component, OnInit, OnDestroy, ElementRef, ViewChild, ChangeDetectionStrategy } from '@angular/core';
-import { Observable, Subject } from 'rxjs';
+import { Observable, Subject, timer } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
+import { IntroductionWizardService } from '../../modules/introduction-wizard/introducation-wizard.service';
 import { FretboardDrawerService, ColorPalette, ScaleModes, SCALES, HandTypes } from '../../modules/fretboard-canvas';
 import { CustomTheme } from '../../modules/palette/palette.component';
 import { StorageService } from '../../services/storage.service';
@@ -116,7 +117,11 @@ export class MainPageComponent implements OnInit, OnDestroy {
   @ViewChild('fretLayer', { static: true }) fretLayer: ElementRef<HTMLCanvasElement>;
   @ViewChild('noteLayer', { static: true }) noteLayer: ElementRef<HTMLCanvasElement>;
 
-  constructor(private drawer: FretboardDrawerService, private storage: StorageService) {
+  constructor(
+    private drawer: FretboardDrawerService,
+    private introductionWizard: IntroductionWizardService,
+    private storage: StorageService
+  ) {
     this.settings = this.storage.get('settings');
 
     if (!this.settings) {
@@ -152,6 +157,15 @@ export class MainPageComponent implements OnInit, OnDestroy {
     const fretLayer = this.fretLayer.nativeElement;
     const noteLayer = this.noteLayer.nativeElement;
     const tuningFromStorage = this.storage.get('settings.tuning');
+    const introductionWasShown = this.storage.get('introductionWasShown');
+
+    if (!introductionWasShown) {
+      timer(4000).subscribe(_ => {
+        this.introductionWizard.openInteractionDialog().subscribe(() => {
+          this.storage.set('introductionWasShown', true);
+        });
+      });
+    }
 
     this.drawer.initialize({
       fretLayer,
