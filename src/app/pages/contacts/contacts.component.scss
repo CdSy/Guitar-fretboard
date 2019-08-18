@@ -1,0 +1,19 @@
+mat-form-field {
+  width: 100%;
+}
+
+.form-group {
+  margin-bottom: 25px;
+
+  &:last-child {
+    margin-bottom: 0;
+  }
+}
+
+button {
+  width: 200px;
+}
+
+h3 {
+  margin-top: 0;
+}

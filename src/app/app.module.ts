@@ -1,12 +1,15 @@
 import { BrowserModule, EventManager } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 import { MainPageComponent } from './pages/main-page/main-page.component';
+import { PolicyPageComponent } from './pages/policy/policy.component';
+import { TermsPageComponent } from './pages/terms/terms.component';
+import { ContactsPageComponent } from './pages/contacts/contacts.component';
 import { SearchSelectComponent } from './pages/main-page/components/search-select/search-select.component';
 import { FretboardSettingsComponent } from './pages/main-page/components/settings/fretboard-settings.component';
 import { AdvertisementComponent } from './pages/main-page/components/ads/advertisement.component';
@@ -20,15 +23,19 @@ import { environment } from '../environments/environment';
   declarations: [
     AppComponent,
     MainPageComponent,
+    PolicyPageComponent,
+    TermsPageComponent,
+    ContactsPageComponent,
     FretboardSettingsComponent,
     SearchSelectComponent,
     AdvertisementComponent,
   ],
   imports: [
-    BrowserModule,
+    BrowserModule.withServerTransition({ appId: 'serverApp' }),
     BrowserAnimationsModule,
     CommonModule,
     FormsModule,
+    ReactiveFormsModule,
     AppRoutingModule,
     MaterialModule,
     FretboardCanvasModule,

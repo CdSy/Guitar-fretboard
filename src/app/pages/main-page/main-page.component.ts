@@ -157,12 +157,12 @@ export class MainPageComponent implements OnInit, OnDestroy {
     const fretLayer = this.fretLayer.nativeElement;
     const noteLayer = this.noteLayer.nativeElement;
     const tuningFromStorage = this.storage.get('settings.tuning');
-    const introductionWasShown = this.storage.get('introductionWasShown');
+    const introductionIsShown = this.storage.get('introductionIsShown');
 
-    if (!introductionWasShown) {
+    if (!introductionIsShown) {
       timer(4000).subscribe(_ => {
         this.introductionWizard.openInteractionDialog().subscribe(() => {
-          this.storage.set('introductionWasShown', true);
+          this.storage.set('introductionIsShown', true);
         });
       });
     }

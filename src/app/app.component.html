@@ -2,6 +2,17 @@
   Guitar fretboard app
 </header> -->
 
-<div style="width: 100%;">
-  <router-outlet></router-outlet>
+<div class="route-page" [@routeAnimations]="getRouterOutletState(outlet)">
+  <router-outlet #outlet="outlet"></router-outlet>
 </div>
+
+<footer class="footer">
+  <div>
+    <a class="navigation-link" routerLink="/fretboard" routerLinkActive="active">Fretboard</a>
+    <a class="navigation-link" routerLink="/privacy-policy" routerLinkActive="active">Privacy Policy</a>
+    <a class="navigation-link" routerLink="/terms-of-use" routerLinkActive="active">Terms of Use</a>
+    <a class="navigation-link" routerLink="/contacts" routerLinkActive="active">Contact Us</a>
+  </div>
+
+  <span class="copyright">Copyright © 2019 Learn-your-guitar.com. All rights reserved.</span>
+</footer>
