@@ -1,6 +1,7 @@
 import { BrowserModule, EventManager } from '@angular/platform-browser';
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { HttpClientModule } from '@angular/common/http';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 
@@ -15,6 +16,7 @@ import { FretboardSettingsComponent } from './pages/main-page/components/setting
 import { AdvertisementComponent } from './pages/main-page/components/ads/advertisement.component';
 import { MaterialModule, FretboardCanvasModule, SideMenuModule, PaletteModule, IntroductionModule } from './modules';
 import { StorageService } from './services/storage.service';
+import { EmailService } from './services/email.service';
 import { OutZoneEventManager } from './services/out-zone-event-manager.service';
 import { ServiceWorkerModule } from '@angular/service-worker';
 import { environment } from '../environments/environment';
@@ -34,6 +36,7 @@ import { environment } from '../environments/environment';
     BrowserModule.withServerTransition({ appId: 'serverApp' }),
     BrowserAnimationsModule,
     CommonModule,
+    HttpClientModule,
     FormsModule,
     ReactiveFormsModule,
     AppRoutingModule,
@@ -46,6 +49,7 @@ import { environment } from '../environments/environment';
   ],
   providers: [
     StorageService,
+    EmailService,
     {provide: EventManager, useClass: OutZoneEventManager},
   ],
   bootstrap: [AppComponent]

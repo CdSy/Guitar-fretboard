@@ -9,7 +9,7 @@ import { slideInAnimation } from './route-animation';
   animations: [ slideInAnimation ]
 })
 export class AppComponent {
-  title = 'Guitar-Fretboard';
+  title = 'Guitar-Scales';
 
   public getRouterOutletState(outlet: RouterOutlet) {
     return outlet.isActivated ? outlet.activatedRoute : '';

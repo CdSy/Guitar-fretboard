@@ -1,5 +1,5 @@
 import { Injectable, OnDestroy } from '@angular/core';
-import { Observable, Subject, BehaviorSubject, fromEvent, timer } from 'rxjs';
+import { Observable, Subject, BehaviorSubject, fromEvent, timer, empty } from 'rxjs';
 import { filter, repeat, take, takeUntil, switchMap } from 'rxjs/operators';
 import { EventManager, SyntheticEvent } from './event-manager.service';
 import { NoteTypes, HandTypes, ColorPalette, ScaleModes } from './models';
@@ -44,7 +44,7 @@ export class FretboardDrawerService implements OnDestroy {
   // Event streams
   canvasHeight$ = new BehaviorSubject<number>(300);
   onDestroy$ = new Subject<void>();
-  resize$ = fromEvent(window, 'resize');
+  resize$ = window ? fromEvent(window, 'resize') : empty();
   clickOnElement$: Observable<SyntheticEvent>;
   longClick$: Observable<SyntheticEvent>;
   pointerDown$: Observable<SyntheticEvent>;
@@ -141,11 +141,11 @@ export class FretboardDrawerService implements OnDestroy {
     this.noteLayer = new CanvasLayer({canvas: noteLayer, ...commonParams});
     this.theme = {...this.theme, ...theme};
 
-    this.pointerDown$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointerdown')
+    this.pointerDown$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'mousedown')
       .pipe(takeUntil(this.onDestroy$));
 
-    this.pointerMove$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointermove');
-    this.pointerUp$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'pointerup');
+    this.pointerMove$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'mousemove');
+    this.pointerUp$ = this.eventManager.addEventListener(this.noteLayer.canvas, 'mouseup');
 
     this.subscribeToEvents();
     this.drawFretboard();
