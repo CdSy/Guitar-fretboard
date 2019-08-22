@@ -1,4 +1,5 @@
 @import "~@angular/material/prebuilt-themes/indigo-pink.css";
+@import "~@ng-select/ng-select/themes/material.theme.css";
 
 @font-face {
   font-family: 'Material Icons';
@@ -167,4 +168,32 @@ body {
     padding: 10px 15px 8px;
     text-transform: uppercase;
   }
+}
+
+.ng-select.custom .ng-select-container .ng-value-container {
+  border-top: 1.2em solid transparent;
+}
+
+.ng-select.custom.ng-select-single .ng-select-container .ng-value-container,
+.ng-select.custom.ng-select-single .ng-select-container .ng-value-container .ng-value {
+  font-size: 16px;
+}
+
+.ng-select.custom .ng-dropdown-panel {
+  width: 260px;
+}
+
+.ng-select.custom.block .ng-dropdown-panel {
+  width: 100%;
+}
+
+.ng-select.custom .ng-dropdown-panel .ng-dropdown-panel-items {
+  max-height: 70vh;
+}
+
+.ng-select.custom .ng-dropdown-panel .ng-dropdown-panel-items .ng-option {
+  line-height: 2.5em;
+  min-height: 2.5em;
+  height: 2.5em;
+  font-size: 13px;
 }

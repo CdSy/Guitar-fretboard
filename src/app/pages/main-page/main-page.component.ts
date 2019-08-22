@@ -17,6 +17,15 @@ export class SelectOption {
   }
 }
 
+export class GroupSelectOption extends SelectOption {
+  group: string;
+
+  constructor({value, label, group}) {
+    super({value, label});
+    this.group = group;
+  }
+}
+
 interface FretboardSettings {
   themes: {[key: string]: ColorPalette};
   themeOptions: Array<SelectOption>;
@@ -27,6 +36,7 @@ interface FretboardSettings {
   showFlatNotes: boolean;
   showSharpNotes: boolean;
   showGhostNotes: boolean;
+  sequences: Array<GroupSelectOption>;
 }
 
 @Component({
@@ -62,8 +72,10 @@ export class MainPageComponent implements OnInit, OnDestroy {
     {value: 'black', label: 'Black'},
   ];
 
-  public sequenceOptions: Array<SelectOption> = Object.keys(SCALES)
-    .map((key) => new SelectOption({value: key, label: key[0].toUpperCase() + key.slice(1)}));
+  private favoriteSequences: Array<string> = [];
+
+  public sequenceOptions: Array<GroupSelectOption> = Object.keys(SCALES)
+    .map((key) => new GroupSelectOption({value: key, label: key, group: 'All'}));
 
   public themes: {[key: string]: ColorPalette} = {
     'dark': {
@@ -112,6 +124,7 @@ export class MainPageComponent implements OnInit, OnDestroy {
     showFlatNotes: this.showFlatNotes,
     showSharpNotes: this.showSharpNotes,
     showGhostNotes: this.showGhostNotes,
+    sequences: this.sequenceOptions
   };
 
   @ViewChild('fretLayer', { static: true }) fretLayer: ElementRef<HTMLCanvasElement>;
@@ -127,30 +140,33 @@ export class MainPageComponent implements OnInit, OnDestroy {
     if (!this.settings) {
       this.storage.set('settings', this.defaultSettings);
       this.settings = this.defaultSettings;
+    } else {
+      // Get from local storage
+      const {
+        numberOfStrings,
+        numberOfFrets,
+        themeName,
+        themes,
+        themeOptions,
+        handType,
+        showFlatNotes,
+        showSharpNotes,
+        showGhostNotes,
+        sequences
+      } = this.settings;
+
+      this.numberOfStrings = numberOfStrings;
+      this.numberOfFrets = numberOfFrets;
+      this.themeName = themeName;
+      this.themes = themes;
+      this.themeOptions = themeOptions;
+      this.handType = handType;
+      this.showFlatNotes = showFlatNotes;
+      this.showSharpNotes = showSharpNotes;
+      this.showGhostNotes = showGhostNotes;
+      this.sequenceOptions = sequences;
+      this.favoriteSequences = sequences.filter(sequence => sequence.group === 'Favorite').map(sequence => sequence.value);
     }
-
-    // Get from local storage
-    const {
-      numberOfStrings,
-      numberOfFrets,
-      themeName,
-      themes,
-      themeOptions,
-      handType,
-      showFlatNotes,
-      showSharpNotes,
-      showGhostNotes,
-    } = this.settings;
-
-    this.numberOfStrings = numberOfStrings;
-    this.numberOfFrets = numberOfFrets;
-    this.themeName = themeName;
-    this.themes = themes;
-    this.themeOptions = themeOptions;
-    this.handType = handType;
-    this.showFlatNotes = showFlatNotes;
-    this.showSharpNotes = showSharpNotes;
-    this.showGhostNotes = showGhostNotes;
   }
 
   ngOnInit() {
@@ -192,9 +208,8 @@ export class MainPageComponent implements OnInit, OnDestroy {
     this.onDestroy$.complete();
   }
 
-  onChangeScale(value: string) {
-    this.scaleSequence = value;
-    this.drawer.changeScale(SCALES[value]);
+  onChangeScale(event: any) {
+    this.drawer.changeScale(SCALES[event.value]);
   }
 
   // onChangeFret(event: any) {
@@ -209,9 +224,9 @@ export class MainPageComponent implements OnInit, OnDestroy {
   //   }
   // }
 
-  onChangeTheme(value: string) {
-    this.drawer.changeTheme(this.themes[value]);
-    this.storage.set('settings.themeName', value);
+  onChangeTheme(event: any) {
+    this.drawer.changeTheme(this.themes[event.value]);
+    this.storage.set('settings.themeName', event.value);
   }
 
   onChangeColor(newTheme: ColorPalette) {
@@ -272,5 +287,31 @@ export class MainPageComponent implements OnInit, OnDestroy {
     }
 
     return String(defaultName + version);
+  }
+
+  toggleFavorite(item: GroupSelectOption) {
+    if (this.isFavorite(item.value)) {
+      this.removeFavorite(item);
+    } else {
+      this.addToFavorite(item);
+    }
+  }
+
+  addToFavorite(item: GroupSelectOption) {
+    this.favoriteSequences.push(item.value);
+    this.sequenceOptions = [new GroupSelectOption({...item, group: 'Favorite'}), ...this.sequenceOptions];
+    this.storage.set('settings.sequences', this.sequenceOptions);
+  }
+
+  removeFavorite(item: GroupSelectOption) {
+    this.favoriteSequences = this.favoriteSequences.filter(sequence => sequence !== item.value);
+    this.sequenceOptions = this.sequenceOptions
+      .filter(option => !(option.value === item.value && option.group === 'Favorite'));
+
+    this.storage.set('settings.sequences', this.sequenceOptions);
+  }
+
+  isFavorite(sequenceName: string) {
+    return this.favoriteSequences.includes(sequenceName);
   }
 }

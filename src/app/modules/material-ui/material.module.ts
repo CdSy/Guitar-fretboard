@@ -1,6 +1,5 @@
 import { NgModule } from '@angular/core';
 import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
 import { MatButtonModule } from '@angular/material/button';
 import { MatCheckboxModule } from '@angular/material/checkbox';
 import { MatIconModule } from '@angular/material/icon';
@@ -9,15 +8,14 @@ import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 import { MatRadioModule } from '@angular/material/radio';
 import { MatSliderModule } from '@angular/material/slider';
 import { MatSnackBarModule } from '@angular/material/snack-bar';
-import { NgxMatSelectSearchModule } from 'ngx-mat-select-search';
 import { MatStepperModule } from '@angular/material/stepper';
 import { MatDialogModule } from '@angular/material/dialog';
+import { NgSelectModule } from '@ng-select/ng-select';
 
 @NgModule({
   imports: [
     MatButtonModule,
     MatCheckboxModule,
-    MatSelectModule,
     MatIconModule,
     MatInputModule,
     MatTooltipModule,
@@ -25,14 +23,13 @@ import { MatDialogModule } from '@angular/material/dialog';
     MatRadioModule,
     MatSliderModule,
     MatSnackBarModule,
-    NgxMatSelectSearchModule,
+    NgSelectModule,
     MatStepperModule,
     MatDialogModule,
   ],
   exports: [
     MatButtonModule,
     MatCheckboxModule,
-    MatSelectModule,
     MatIconModule,
     MatInputModule,
     MatTooltipModule,
@@ -40,7 +37,7 @@ import { MatDialogModule } from '@angular/material/dialog';
     MatRadioModule,
     MatSliderModule,
     MatSnackBarModule,
-    NgxMatSelectSearchModule,
+    NgSelectModule,
     MatStepperModule,
     MatDialogModule,
   ],

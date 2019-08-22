@@ -29,42 +29,55 @@
     </button>
   </div>
 
-  <div class="form-field">
-    <mat-form-field style="width: 100px;">
-      <mat-label>Theme</mat-label>
-      <mat-select [(ngModel)]="themeName" (selectionChange)="onChangeTheme($event.value)" name="theme">
-        <mat-option *ngFor="let theme of themeOptions" [value]="theme.value">
-          {{theme.label}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
-
-    <select name="theme" style="position: absolute; top: -1000px;">
-      <option *ngFor="let theme of themeOptions" [value]="theme.value">{{theme.label}}</option>
-    </select>
+  <div class="form-field" style="width: 100px;">
+    <ng-select
+      [items]="themeOptions"
+      [searchable]="false"
+      [clearable]="false"
+      bindValue="value"
+      bindLabel="label"
+      placeholder="Theme"
+      [(ngModel)]="themeName"
+      (change)="onChangeTheme($event)"
+      class="custom block"
+    ></ng-select>
   </div>
 
   <div class="form-field" style="width: 200px;">
-    <!-- <mat-form-field style="width: 200px;">
-      <mat-label>Scales</mat-label>
-      <mat-select [(ngModel)]="scaleSequence" (selectionChange)="onChangeScale($event.value)" name="scale">
-        <mat-option *ngFor="let sequence of sequenceOptions" [value]="sequence.value">
-          {{sequence.label}}
-        </mat-option>
-      </mat-select>
-    </mat-form-field> -->
-    <app-search-select
-      [value]="scaleSequence"
-      [options]="sequenceOptions"
-      (selectionChange)="onChangeScale($event.value)"
-      label="Scales"
-      placeholder="Find scale..."
-      name="scale"
-    ></app-search-select>
+    <ng-select
+      [items]="sequenceOptions"
+      [clearable]="false"
+      bindValue="value"
+      bindLabel="label"
+      groupBy="group"
+      placeholder="Scale"
+      [(ngModel)]="scaleSequence"
+      (change)="onChangeScale($event)"
+      class="custom"
+    >
+      <ng-template ng-option-tmp let-item="item">
+        <div class="option-item">
+          {{item.label}}
 
-    <select name="scales" style="position: absolute; top: -1000px;">
-      <option *ngFor="let option of sequenceOptions" [value]="option.value">{{option.label}}</option>
-    </select>
+          <div
+            *ngIf="item.group !== 'Favorite'"
+            class="favorite-button"
+            [ngClass]="{active: isFavorite(item.value)}"
+            (click)="toggleFavorite(item); $event.stopPropagation();"
+          >
+            <mat-icon>favorite</mat-icon>
+          </div>
+
+          <div
+            class="remove-button"
+            *ngIf="item.group === 'Favorite'"
+            (click)="removeFavorite(item); $event.stopPropagation();"
+          >
+            <mat-icon>remove</mat-icon>
+          </div>
+        </div>
+      </ng-template>
+    </ng-select>
   </div>
 
   <div class="form-field">

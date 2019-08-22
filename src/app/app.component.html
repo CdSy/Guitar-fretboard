@@ -1,3 +1,19 @@
+<header style="position: absolute; top: -1000px;">
+  <label>
+    Select theme
+    <select name="theme">
+      <option *ngFor="let theme of themeOptions" [value]="theme.value">{{theme.label}}</option>
+    </select>
+  </label>
+
+  <label>
+    Select Scale
+    <select name="scales">
+      <option *ngFor="let option of sequenceOptions" [value]="option.value">{{option.label}}</option>
+    </select>
+  </label>
+</header>
+
 <div class="route-page" [@routeAnimations]="getRouterOutletState(outlet)">
   <router-outlet #outlet="outlet"></router-outlet>
 </div>

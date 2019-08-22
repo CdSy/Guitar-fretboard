@@ -11,7 +11,6 @@ import { MainPageComponent } from './pages/main-page/main-page.component';
 import { PolicyPageComponent } from './pages/policy/policy.component';
 import { TermsPageComponent } from './pages/terms/terms.component';
 import { ContactsPageComponent } from './pages/contacts/contacts.component';
-import { SearchSelectComponent } from './pages/main-page/components/search-select/search-select.component';
 import { FretboardSettingsComponent } from './pages/main-page/components/settings/fretboard-settings.component';
 import { AdvertisementComponent } from './pages/main-page/components/ads/advertisement.component';
 import { MaterialModule, FretboardCanvasModule, SideMenuModule, PaletteModule, IntroductionModule } from './modules';
@@ -29,7 +28,6 @@ import { environment } from '../environments/environment';
     TermsPageComponent,
     ContactsPageComponent,
     FretboardSettingsComponent,
-    SearchSelectComponent,
     AdvertisementComponent,
   ],
   imports: [
