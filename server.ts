@@ -21,10 +21,22 @@ import * as express from 'express';
 import { join } from 'path';
 import * as mailer from 'nodemailer';
 import { getTemplate } from './email-template';
+import { createSitemap } from 'sitemap';
 
 // Express server
 const app = express();
 app.use(express.json());
+
+const sitemap = createSitemap({
+  hostname: 'https://guitar-scales.org',
+  cacheTime: 600000, // 600 sec - cache purge period
+  urls: [
+    { url: '/fretboard/', priority: 1, lastmod: '2019-08-23' },
+    { url: '/privacy-policy/', lastmod: '2019-08-23', priority: 0.5 },
+    { url: '/terms-of-use/', lastmod: '2019-08-23', priority: 0.5 },
+    { url: '/contacts/', lastmod: '2019-08-23', priority: 0.5 }
+  ]
+});
 
 const PORT = process.env.PORT || 4200;
 const DIST_FOLDER = join(process.cwd(), 'public');
@@ -83,6 +95,17 @@ app.post('/api/email', (req, res) => {
       console.log('There was an error sending the email');
       console.log(error);
     });
+});
+
+app.get('/sitemap.xml', function(req, res) {
+  try {
+    const xml = sitemap.toXML();
+    res.header('Content-Type', 'application/xml');
+    res.send( xml );
+  } catch (e) {
+    console.error(e);
+    res.status(500).end();
+  }
 });
 
 // Serve static files from /public

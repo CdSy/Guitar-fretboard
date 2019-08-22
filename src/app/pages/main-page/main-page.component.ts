@@ -164,8 +164,8 @@ export class MainPageComponent implements OnInit, OnDestroy {
       this.showFlatNotes = showFlatNotes;
       this.showSharpNotes = showSharpNotes;
       this.showGhostNotes = showGhostNotes;
-      this.sequenceOptions = sequences;
-      this.favoriteSequences = sequences.filter(sequence => sequence.group === 'Favorite').map(sequence => sequence.value);
+      this.sequenceOptions = sequences ? sequences : this.sequenceOptions;
+      this.favoriteSequences = sequences ? sequences.filter(sequence => sequence.group === 'Favorite').map(sequence => sequence.value) : [];
     }
   }
 
