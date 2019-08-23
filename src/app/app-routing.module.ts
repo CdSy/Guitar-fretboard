@@ -10,11 +10,14 @@ const routes: Routes = [
   { path: 'privacy-policy', component: PolicyPageComponent },
   { path: 'terms-of-use', component: TermsPageComponent },
   { path: 'contacts', component: ContactsPageComponent },
-  { path: '**', redirectTo: 'fretboard' }
+  { path: 'not-found', loadChildren: './pages/not-found/not-found.module#NotFoundModule'},
+  { path: '**', redirectTo: 'not-found' }
 ];
 
 @NgModule({
-  imports: [RouterModule.forRoot(routes)],
+  imports: [RouterModule.forRoot(routes, {
+    initialNavigation: 'enabled',
+  })],
   exports: [RouterModule]
 })
 export class AppRoutingModule { }
