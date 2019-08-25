@@ -16,7 +16,7 @@ export class ContactsPageComponent implements OnInit {
     this.formGroup = new FormGroup({
       'name': new FormControl(''),
       'email': new FormControl(''),
-      'message': new FormControl('', [ Validators.required])
+      'message': new FormControl('')
     });
   }
 
@@ -39,6 +39,5 @@ export class ContactsPageComponent implements OnInit {
       });
 
     this.formGroup.reset();
-    this.formGroup.clearValidators();
   }
 }

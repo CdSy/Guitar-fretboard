@@ -18,10 +18,6 @@
       <div class="form-group">
         <mat-form-field>
           <textarea class="form-control" rows="9" placeholder="Text your message" matInput name="phone" formControlName="message"></textarea>
-
-          <mat-error *ngIf="formGroup.controls['message'].invalid && formGroup.controls['message'].touched">
-            Message is empty
-          </mat-error>
         </mat-form-field>
       </div>
 

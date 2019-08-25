@@ -6,6 +6,7 @@ import { TermsPageComponent } from './pages/terms/terms.component';
 import { ContactsPageComponent } from './pages/contacts/contacts.component';
 
 const routes: Routes = [
+  { path: '', redirectTo: 'fretboard', pathMatch: 'full' },
   { path: 'fretboard', component: MainPageComponent },
   { path: 'privacy-policy', component: PolicyPageComponent },
   { path: 'terms-of-use', component: TermsPageComponent },

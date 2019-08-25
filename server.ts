@@ -17,11 +17,49 @@
 
 import 'zone.js/dist/zone-node';
 
+import * as fs from 'fs';
 import * as express from 'express';
 import { join } from 'path';
+import * as domino from 'domino';
+import * as localStorage from 'localstorage-polyfill';
 import * as mailer from 'nodemailer';
 import { getTemplate } from './email-template';
 import { createSitemap } from 'sitemap';
+import { RESPONSE } from '@nguniversal/express-engine/tokens';
+
+const DIST_FOLDER = join(process.cwd(), 'app', 'public');
+
+const template = fs.readFileSync(join(DIST_FOLDER, 'index.html')).toString();
+// for mock global window by domino
+const win = domino.createWindow(template);
+
+// mock
+global['window'] = win;
+// not implemented property and functions
+Object.defineProperty(win.document.body.style, 'transform', {
+  value: () => {
+    return {
+      enumerable: true,
+      configurable: true,
+    };
+  },
+});
+
+global['getComputedStyle'] = () => {
+  return {
+    getPropertyValue() {
+      return '';
+    }
+  };
+};
+
+// mock documnet
+global['document'] = win.document;
+global['localStorage'] = localStorage;
+// othres mock
+global['CSS'] = null;
+// global['XMLHttpRequest'] = require('xmlhttprequest').XMLHttpRequest;
+global['Prism'] = null;
 
 // Express server
 const app = express();
@@ -31,6 +69,7 @@ const sitemap = createSitemap({
   hostname: 'https://guitar-scales.org',
   cacheTime: 600000, // 600 sec - cache purge period
   urls: [
+    { url: '/', priority: 1, lastmod: '2019-08-24' },
     { url: '/fretboard/', priority: 1, lastmod: '2019-08-23' },
     { url: '/privacy-policy/', lastmod: '2019-08-23', priority: 0.5 },
     { url: '/terms-of-use/', lastmod: '2019-08-23', priority: 0.5 },
@@ -39,7 +78,6 @@ const sitemap = createSitemap({
 });
 
 const PORT = process.env.PORT || 4200;
-const DIST_FOLDER = join(process.cwd(), 'public');
 
 // * NOTE :: leave this as require() since this file is built Dynamically from webpack
 const {AppServerModuleNgFactory, LAZY_MODULE_MAP, ngExpressEngine, provideModuleMap} = require('./dist/server/main');
@@ -58,22 +96,20 @@ app.set('views', DIST_FOLDER);
 // Example Express Rest API endpoints
 // app.get('/api/**', (req, res) => { });
 
-const accessToken = 'ya29.GltpB9oKc1lH79ie6RO5xNEY08Wg6eBbztEXl3SoTQA5xmF4lxHK-6r-SjkXOnaftNRo3roY4b-r12MK6vymgHzJwz8tjbEFh5mlCqa8VZRqeHiQXm9t-RJBQ-j1';
-
 const mailerAuthOptions = {
   type: 'OAuth2',
   user: 'alexey.tuichiev@gmail.com',
   clientId: '598451784986-85o0rbel0r2cb8mitpsnuadef1049ivb.apps.googleusercontent.com',
   clientSecret: 'KSqsug0dGkZ3on_PKSXnuZg5',
-  refreshToken: '1/kyh_3QiZ1k9H0gu6v-zJJddqQyf1x_-U3wBAsRHKfKUxPm647H8WLlOuB1QqrRTJ',
-  accessToken: accessToken
+  refreshToken: '1/XsEFeFt-WtLFURIhaCQBVMlN6C_n4nj3cCeW63bmSho',
 };
 
 const smtpTransport = mailer.createTransport({
+  service: 'gmail',
   host: 'smtp.gmail.com',
-  port: 465,
   secure: true,
-  auth: mailerAuthOptions,
+  port: 465,
+  auth: mailerAuthOptions
 });
 
 app.post('/api/email', (req, res) => {
@@ -114,8 +150,30 @@ app.get('*.*', express.static(DIST_FOLDER, {
 }));
 
 // All regular routes use the Universal engine
-app.get('*', (req, res) => {
-  res.render('index', { req });
+// app.get('*', (req, res) => {
+//   res.render('index', { req, res });
+// });
+
+app.get('*', async (req, res) => {
+  res.render('index', {req, res, providers: [
+      {
+        provide: RESPONSE,
+        useValue: res,
+      },
+    ]}, (error, html) => {
+    if (error) {
+      console.log(`Error generating html for req ${req.url}`, error);
+      return (req as any).next(error);
+    }
+
+    res.send(html);
+
+    if (!error) {
+      if (res.statusCode === 200) {
+        //toCache(req.url, html);
+      }
+    }
+  });
 });
 
 // Start up the Node server
