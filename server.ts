@@ -21,7 +21,6 @@ import * as fs from 'fs';
 import * as express from 'express';
 import { join } from 'path';
 import * as domino from 'domino';
-import * as localStorage from 'localstorage-polyfill';
 import * as mailer from 'nodemailer';
 import { getTemplate } from './email-template';
 import { createSitemap } from 'sitemap';
@@ -55,7 +54,6 @@ global['getComputedStyle'] = () => {
 
 // mock documnet
 global['document'] = win.document;
-global['localStorage'] = localStorage;
 // othres mock
 global['CSS'] = null;
 // global['XMLHttpRequest'] = require('xmlhttprequest').XMLHttpRequest;
