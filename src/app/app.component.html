@@ -14,6 +14,10 @@
   </label>
 </header>
 
+<aside style="position: absolute; top: -1000px;">
+  <a class="navigation-link" *ngFor="let option of sequenceOptions; let i = index" routerLink="/fretboard" [queryParams]="{sequence: option.label}">{{option.label}}</a>
+</aside>
+
 <div class="route-page" [@routeAnimations]="getRouterOutletState(outlet)">
   <router-outlet #outlet="outlet"></router-outlet>
 </div>
